@@ -21,9 +21,8 @@ pub(crate) struct Project {
 }
 
 macro_rules! makefile_template {
-    () =>
-    {
-"
+    () => {
+        "
 CC=clang
 CFLAGS=-std={} {} {} {}
 CSRC=$(shell find src -type f -name '*.c')
@@ -123,23 +122,21 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> (String, String) {
     let mut library_ldflags = String::new();
 
     if let Some(libraries) = libraries {
-        libraries.iter().for_each(
-            |library| {
-                match library {
-                    Library::PkgConfig { name } => {
-                        library_cflags.push_str(&call_pkg_config(&name, "--cflags"));
-                        library_ldflags.push_str(&call_pkg_config(&name, "--libs"));
-                    }
-                    Library::Manual { cflags, ldflags } => {
-                        library_cflags.push_str(cflags);
-                        library_ldflags.push_str(ldflags);
-                    }
+        libraries.iter().for_each(|library| {
+            match library {
+                Library::PkgConfig { name } => {
+                    library_cflags.push_str(&call_pkg_config(&name, "--cflags"));
+                    library_ldflags.push_str(&call_pkg_config(&name, "--libs"));
                 }
-
-                library_cflags.push_str(" ");
-                library_ldflags.push_str(" ");
+                Library::Manual { cflags, ldflags } => {
+                    library_cflags.push_str(cflags);
+                    library_ldflags.push_str(ldflags);
+                }
             }
-        );
+
+            library_cflags.push_str(" ");
+            library_ldflags.push_str(" ");
+        });
     }
 
     (library_cflags, library_ldflags)
