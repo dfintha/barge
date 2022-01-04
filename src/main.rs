@@ -44,6 +44,10 @@ fn init(name: &str) -> Result<()> {
         let mut file = std::fs::File::create(path.clone() + "/src/main.cpp")?;
         file.write_all(hello_template!().as_bytes())?;
     }
+    {
+        let mut file = std::fs::File::create(path.clone() + "/.gitignore")?;
+        file.write_all("bin/*\nobj/*\n".as_bytes())?;
+    }
     Command::new("git").arg("init").arg(name).output()?;
     println!("Project '{}' successfully created.", name);
     Ok(())
