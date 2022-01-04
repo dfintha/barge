@@ -5,7 +5,48 @@ use std::process::{Command, Stdio};
 mod project;
 
 fn usage() {
-    println!("Usage: barge [build|clean|lines]");
+    println!("Usage: barge [init|build|clean|lines]");
+}
+
+macro_rules! barge_template {
+    () => {
+        "{{
+    \"name\": \"{}\",
+    \"c_standard\": \"c99\",
+    \"cpp_standard\": \"c++14\"
+}}
+"
+    };
+}
+
+macro_rules! hello_template {
+    () => {
+        "#include <iostream>
+
+int main() {
+    std::cout << \"Hello, world!\" << std::endl;
+    return 0;
+}
+"
+    };
+}
+
+fn init(name: &str) -> Result<()> {
+    let path = String::from(name);
+    std::fs::create_dir(path.clone())?;
+    std::fs::create_dir(path.clone() + "/src")?;
+    std::fs::create_dir(path.clone() + "/include")?;
+    {
+        let mut file = std::fs::File::create(path.clone() + "/barge.json")?;
+        file.write_all(format!(barge_template!(), name).as_bytes())?;
+    }
+    {
+        let mut file = std::fs::File::create(path.clone() + "/src/main.cpp")?;
+        file.write_all(hello_template!().as_bytes())?;
+    }
+    Command::new("git").arg("init").arg(name).output()?;
+    println!("Project '{}' successfully created.", name);
+    Ok(())
 }
 
 fn build(project: &Project) -> Result<()> {
@@ -61,14 +102,23 @@ fn lines() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let project = Project::load("barge.json")?;
-
     let args: Vec<String> = std::env::args().collect();
-    if args.len() != 2 {
+    if args.len() < 2 {
         usage();
+        return Ok(());
     }
 
     let mode = &args[1];
+    if mode == "init" {
+        if args.len() < 3 {
+            usage();
+            return Ok(());
+        }
+        init(&args[2])?;
+        return Ok(());
+    }
+
+    let project = Project::load("barge.json")?;
     if mode == "build" {
         build(&project)?;
     } else if mode == "clean" {
