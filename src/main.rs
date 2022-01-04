@@ -54,17 +54,19 @@ fn init(name: &str) -> Result<()> {
 }
 
 fn build(project: &Project) -> Result<()> {
-    let makefile = project.generate_makefile();
-    let filename = ".barge.makefile";
-    let mut file = std::fs::File::create(filename)?;
-    file.write_all(makefile.as_bytes())?;
-    Command::new("make")
+    let mut make = Command::new("make")
         .arg("-f")
-        .arg(".barge.makefile")
+        .arg("-")
         .arg("all")
-        .spawn()?
-        .wait()?;
-    std::fs::remove_file(filename)?;
+        .stdin(Stdio::piped())
+        .spawn()?;
+
+    let makefile = project.generate_makefile();
+    make.stdin
+        .as_mut()
+        .unwrap()
+        .write_all(makefile.as_bytes())?;
+    make.wait()?;
     Ok(())
 }
 
