@@ -6,7 +6,7 @@ use std::process::{Command, Stdio};
 mod project;
 
 fn usage() {
-    println!("Usage: barge [init|build|clean|lines]");
+    println!("Usage: barge [init|build|run|clean|lines]");
 }
 
 macro_rules! barge_template {
@@ -76,6 +76,27 @@ fn build(project: &Project) -> Result<()> {
         .unwrap()
         .write_all(makefile.as_bytes())?;
     make.wait()?;
+    Ok(())
+}
+
+fn run(project: &Project) -> Result<()> {
+    build(project)?;
+
+    println!(
+        "{}{}",
+        Style::new()
+            .bold()
+            .fg(Color::Green)
+            .paint("Running executable bin/"),
+        Style::new()
+            .bold()
+            .fg(Color::Green)
+            .paint(project.name.clone())
+    );
+    Command::new(format!("bin/{}", project.name.clone()).as_str())
+        .spawn()?
+        .wait()?;
+
     Ok(())
 }
 
@@ -150,6 +171,8 @@ fn main() -> Result<()> {
     let project = Project::load("barge.json")?;
     if mode == "build" {
         build(&project)?;
+    } else if mode == "run" {
+        run(&project)?;
     } else if mode == "clean" {
         clean()?;
     } else if mode == "lines" {
