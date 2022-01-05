@@ -97,4 +97,3 @@ Future improvements, TODOs
 2. Subcommand to perform source code analysis via clang-tidy.
 3. Separate custom flags for C and C++.
 4. Add an option to set options for GNU make.
-5. Add timing for build sessions.

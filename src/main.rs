@@ -2,6 +2,7 @@ use crate::project::{BuildMode, Project};
 use ansi_term::*;
 use std::io::{Result, Write};
 use std::process::{Command, Stdio};
+use std::time::Instant;
 
 mod project;
 
@@ -78,6 +79,8 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         Style::new().bold().fg(Color::Blue).paint("mode")
     );
 
+    let start_time = Instant::now();
+
     let mut make = Command::new("make")
         .arg("-f")
         .arg("-")
@@ -91,6 +94,15 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         .unwrap()
         .write_all(makefile.as_bytes())?;
     make.wait()?;
+
+    let finish_time = Instant::now();
+    let build_duration = finish_time - start_time;
+
+    println!("{} {} {}",
+             Style::new().bold().fg(Color::Blue).paint("Build finished in"),
+             Style::new().bold().fg(Color::Blue).paint(format!("{:.2}", build_duration.as_secs_f64())),
+             Style::new().bold().fg(Color::Blue).paint("seconds."));
+
     Ok(())
 }
 
