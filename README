@@ -18,6 +18,8 @@ following subcommands.
   uses GNU make for the build step, messages emitted by make may appear on the
   standard output alongside barge's output. The resulting executable resides in
   the 'bin' directory.
+- rebuild:
+  The same as subsequently invoking 'clean' and 'build'.
 - run:
   Builds the project if needed, and runs the resulting executable.
 - clean:

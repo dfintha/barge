@@ -6,7 +6,7 @@ use std::process::{Command, Stdio};
 mod project;
 
 fn usage() {
-    println!("Usage: barge [init|build|run|clean|lines]");
+    println!("Usage: barge [init|build|rebuild|run|clean|lines]");
 }
 
 macro_rules! barge_template {
@@ -196,6 +196,10 @@ fn main() -> Result<()> {
     let project = Project::load("barge.json")?;
     if mode == "build" {
         let build_mode = parse_build_mode(&args, 2);
+        build(&project, build_mode)?;
+    } else if mode == "rebuild" {
+        let build_mode = parse_build_mode(&args, 2);
+        clean()?;
         build(&project, build_mode)?;
     } else if mode == "run" {
         let build_mode = parse_build_mode(&args, 2);
