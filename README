@@ -1,0 +1,85 @@
+barge - A simple C/C++ build tool for simple projects
+=====================================================
+
+Overview
+--------
+
+This tool simplifies the development of small, simple C/C++ projects, by
+accomplishing tasks, that a makefile could. Right now, barge has the following
+subcommands.
+
+- init <repo>:
+  Creates a new repository with a simple "Hello, world!" program. The repository
+  contains an empty 'include' folder, an 'src' folder, a '.gitignore' file, and
+  a 'barge.json' with the project name and the default settings. A git
+  repository is also initialized in the directory.
+- build:
+  Builds the project using clang/clang++ and GNU make. Because the software
+  uses GNU make for the build step, messages emitted by make may appear on the
+  standard output alongside barge's output. The resulting executable resides in
+  the 'bin' directory.
+- run:
+  Builds the project if needed, and runs the resulting executable.
+- clean:
+  Deletes the executable and object files, by removing both the 'bin' and 'obj'
+  folders.
+- lines:
+  Prints the amount of source code lines to the standard output.
+
+All the source and headers files are automatically added to the build under
+their respective dedicated folders ('include' and 'src') and their subfolder.
+As such, header files shall be added to the 'include' directory, and source
+files shall be added to the 'src' directory.
+
+The configuration file
+----------------------
+
+As of now, the user can specify the settings to their project by changing
+'barge.json' at the project root. This file contains the following data.
+
+- name (string):
+  The name of the project, and as such, the executable.
+- c_standard (string):
+  The C standard used for the C source files, in a format like "c99".
+- cpp_standard (string):
+  The C++ standard used for the C source files, in a format like "c++14".
+- external_libraries (list of objects):
+  The list of external libraries to link with. This is a list of objects, which
+  are represented in one of the following ways.
+  - Using pkg-build: { type: "pkgbuild", name: "<package name>" }
+  - Manually specifying flags: { type: "manual", "cflags": "", ldflags: "-lm"}
+- custom_cflags (string):
+  Adds the flags specified here to the source file compilation command line.
+- custom_ldflags (string):
+  Adds the flags specified here to the executable linking command line.
+
+This following simple example covers all the things specified above.
+
+{
+    "name": "example",
+    "c_standard": "c99",
+    "cpp_standard": "c++14",
+    "external_libraries": [
+        {
+            "type": "pkgconfig",
+            "name": "sdl"
+        },
+        {
+            "type": "manual",
+            "cflags": "",
+            "ldflags": "-lpthread"
+        },
+    ],
+    "custom_cflags": "-DNDEBUG"
+    "custom_ldflags": "-ggdb"
+}
+
+Future improvements, TODOs
+--------------------------
+
+1. Right now, the software is very error-prone, because the unwrap() function is
+   heavily used. This should be replaced with proper error handling.
+2. An option to build in release mode is an obvious requirement.
+3. Subcommand to perform source code analysis via clang-tidy.
+4. Separate custom flags for C and C++.
+5. Add an option to include assembly sources, compiled via nasm or yasm.
