@@ -4,9 +4,9 @@ barge - A simple C/C++ build tool for simple projects
 Overview
 --------
 
-This tool simplifies the development of small, simple C/C++ projects, by
-accomplishing tasks, that a makefile could. Right now, barge has the following
-subcommands.
+This tool simplifies the development of small, simple Assembly/C/C++ projects,
+by accomplishing tasks, that a makefile could. Right now, barge has the
+following subcommands.
 
 - init <repo>:
   Creates a new repository with a simple "Hello, world!" program. The repository
@@ -29,7 +29,9 @@ subcommands.
 All the source and headers files are automatically added to the build under
 their respective dedicated folders ('include' and 'src') and their subfolder.
 As such, header files shall be added to the 'include' directory, and source
-files shall be added to the 'src' directory.
+files shall be added to the 'src' directory. Also, the source files shall always
+have their corresponding extension: '.s' for x86 assembly sources, '.c' for C
+sources, and '.cpp' for C++ sources.
 
 Build modes
 -----------
@@ -92,5 +94,4 @@ Future improvements, TODOs
    heavily used. This should be replaced with proper error handling.
 2. Subcommand to perform source code analysis via clang-tidy.
 3. Separate custom flags for C and C++.
-4. (Add an option to include assembly sources, compiled via nasm or yasm.)
-5. Add an option to set options for GNU make.
+4. Add an option to set options for GNU make.

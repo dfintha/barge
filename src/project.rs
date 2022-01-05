@@ -29,6 +29,11 @@ pub(crate) enum BuildMode {
 macro_rules! makefile_template {
     () => {
         "
+ASM=nasm
+ASMFLAGS=-f elf64
+ASMSRC=$(shell find src -type f -name '*.s')
+ASMOBJ=$(patsubst src/%.s,obj/{}/%.s.o,$(ASMSRC))
+
 CC=clang
 CFLAGS={}
 CSRC=$(shell find src -type f -name '*.c')
@@ -39,12 +44,12 @@ CXXFLAGS={}
 CXXSRC=$(shell find src -type f -name '*.cpp')
 CXXOBJ=$(patsubst src/%.cpp,obj/{}/%.cpp.o,$(CXXSRC))
 
-LDFLAGS={}
+LDFLAGS=-no-pie {}
 
 NAME={}
 BINARY=bin/{}/$(NAME)
-SOURCES=$(CSRC) $(CXXSRC)
-OBJECTS=$(COBJ) $(CXXOBJ)
+SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC)
+OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ)
 HEADERS=$(shell find include -name '*.h*')
 
 GREEN=`tput setaf 2``tput bold`
@@ -56,11 +61,16 @@ DIM=`tput dim`
 
 all: $(BINARY)
 
-$(BINARY): $(COBJ) $(CXXOBJ)
+$(BINARY): $(COBJ) $(CXXOBJ) $(ASMOBJ)
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%sLinking executable %s%s\\n' $(GREEN) $@ $(RESET)
 \t@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 \t@printf '%sBuilt target %s%s\\n' $(BLUE) $(NAME) $(RESET)
+
+obj/{}/%.s.o: src/%.s
+\t@mkdir -p $(shell dirname $@)
+\t@printf '%s%sBuilding assembly object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
+\t@$(ASM) $(ASMFLAGS) $< -o $@
 
 obj/{}/%.c.o: src/%.c $(HEADERS)
 \t@mkdir -p $(shell dirname $@)
@@ -132,12 +142,14 @@ impl Project {
 
         let result = format!(
             makefile_template!(),
+            mode_string,
             cflags,
             mode_string,
             cxxflags,
             mode_string,
             ldflags,
             self.name,
+            mode_string,
             mode_string,
             mode_string,
             mode_string
