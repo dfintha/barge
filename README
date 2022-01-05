@@ -38,9 +38,9 @@ sources, and '.cpp' for C++ sources.
 Build modes
 -----------
 
-The user can specify for the 'build' and 'run' subcommands the corresponding
-build mode by adding either the '--debug' or the '--release' argument directly
-after them.
+The user can specify for the 'build', 'rebuild' and 'run' subcommands the
+corresponding build mode by adding either the 'debug' or the 'release' argument
+directly after them.
 
 In debug build mode, the resulting executable is optimized for debugging in the
 GNU debugger (gdb). In release mode, the executable is optimized for speed, and

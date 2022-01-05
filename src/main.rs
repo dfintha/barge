@@ -1,13 +1,41 @@
 use crate::project::{BuildMode, Project};
-use ansi_term::*;
+use ansi_term::{Color, Style};
+use lazy_static::lazy_static;
 use std::io::{Result, Write};
 use std::process::{Command, Stdio};
 use std::time::Instant;
 
 mod project;
 
+lazy_static! {
+    static ref BLUE: Style = Style::new().bold().fg(Color::Blue);
+    static ref GREEN: Style = Style::new().bold().fg(Color::Green);
+    static ref WHITE: Style = Style::new().bold().fg(Color::White);
+}
+
+macro_rules! color_println {
+    ($style:tt, $($arg:tt)*) => {
+        println!("{}", $style.paint(format!($($arg)*)))
+    }
+}
+
 fn usage() {
-    println!("Usage: barge [init|build|rebuild|run|clean|lines]");
+    println!(
+        "A very basic build tool for very basic assembly/C/C++ projects.
+
+USAGE:
+    barge [SUBCOMMAND] [OPTIONS]
+
+The available subcommands are:
+    build, b [MODE]     Builds the current project in the given build mode
+    clean               Remove the build artifacts
+    init [NAME]         Create a new project named NAME in a new directory
+    run, r [MODE]       Runs the binary of the current project
+    rebuild [MODE]      Removed build artifacts, and builds the project
+
+The MODE argument can be either 'debug' or 'release'. If non given, the default
+is 'debug'."
+    );
 }
 
 macro_rules! barge_template {
@@ -35,9 +63,11 @@ int main() {
 
 fn init(name: &str) -> Result<()> {
     let path = String::from(name);
+
     std::fs::create_dir(path.clone())?;
     std::fs::create_dir(path.clone() + "/src")?;
     std::fs::create_dir(path.clone() + "/include")?;
+
     {
         let mut file = std::fs::File::create(path.clone() + "/barge.json")?;
         file.write_all(format!(barge_template!(), name).as_bytes())?;
@@ -50,16 +80,10 @@ fn init(name: &str) -> Result<()> {
         let mut file = std::fs::File::create(path.clone() + "/.gitignore")?;
         file.write_all("bin/*\nobj/*\n".as_bytes())?;
     }
+
     Command::new("git").arg("init").arg(name).output()?;
-    println!(
-        "{}{}{}",
-        Style::new().bold().fg(Color::Green).paint("Project '"),
-        Style::new().bold().fg(Color::Green).paint(name),
-        Style::new()
-            .bold()
-            .fg(Color::Green)
-            .paint("' successfully created.")
-    );
+
+    color_println!(GREEN, "Project {} successfully created", name);
     Ok(())
 }
 
@@ -69,16 +93,7 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         BuildMode::Release => "release",
     };
 
-    println!(
-        "{} {} {}",
-        Style::new()
-            .bold()
-            .fg(Color::Blue)
-            .paint("Building project in"),
-        Style::new().bold().fg(Color::Blue).paint(mode_string),
-        Style::new().bold().fg(Color::Blue).paint("mode")
-    );
-
+    color_println!(BLUE, "Building project in {} mode", mode_string);
     let start_time = Instant::now();
 
     let mut make = Command::new("make")
@@ -97,12 +112,11 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
 
     let finish_time = Instant::now();
     let build_duration = finish_time - start_time;
-
-    println!("{} {} {}",
-             Style::new().bold().fg(Color::Blue).paint("Build finished in"),
-             Style::new().bold().fg(Color::Blue).paint(format!("{:.2}", build_duration.as_secs_f64())),
-             Style::new().bold().fg(Color::Blue).paint("seconds."));
-
+    color_println!(
+        BLUE,
+        "Build finished in {:.2} seconds.",
+        build_duration.as_secs_f64()
+    );
     Ok(())
 }
 
@@ -115,28 +129,13 @@ fn run(project: &Project, build_mode: BuildMode) -> Result<()> {
     };
 
     let path = String::from("bin/") + &mode_string + "/" + &project.name;
-
-    println!(
-        "{} {}",
-        Style::new()
-            .bold()
-            .fg(Color::Blue)
-            .paint("Running executable"),
-        Style::new().bold().fg(Color::Blue).paint(&path)
-    );
-
+    color_println!(BLUE, "Running executable {}", &path);
     Command::new(format!("{}", &path)).spawn()?.wait()?;
     Ok(())
 }
 
 fn clean() -> Result<()> {
-    println!(
-        "{}",
-        Style::new()
-            .bold()
-            .fg(Color::Blue)
-            .paint("Removing build artifacts")
-    );
+    color_println!(BLUE, "{}", "Removing build artifacts");
     let _bin = std::fs::remove_dir_all("bin");
     let _obj = std::fs::remove_dir_all("obj");
     Ok(())
@@ -168,23 +167,17 @@ fn lines() -> Result<()> {
     let mut wc = String::from(std::str::from_utf8(&wc).unwrap());
     wc.pop();
 
-    println!(
-        "{} {} {}",
-        Style::new()
-            .bold()
-            .fg(Color::Blue)
-            .paint("The project contains"),
-        Style::new().bold().fg(Color::Blue).paint(wc),
-        Style::new().bold().fg(Color::Blue).paint("lines of code.")
-    );
+    color_println!(BLUE, "The project contains {} lines of code.", wc);
     Ok(())
 }
 
 fn parse_build_mode(args: &Vec<String>, index: usize) -> BuildMode {
-    if args.len() < (index + 1) || &args[index] != "--release" {
+    if args.len() < (index + 1) || &args[index] == "debug" {
         BuildMode::Debug
-    } else {
+    } else if &args[index] == "release" {
         BuildMode::Release
+    } else {
+        BuildMode::Debug
     }
 }
 
@@ -206,14 +199,14 @@ fn main() -> Result<()> {
     }
 
     let project = Project::load("barge.json")?;
-    if mode == "build" {
+    if mode == "build" || mode == "b" {
         let build_mode = parse_build_mode(&args, 2);
         build(&project, build_mode)?;
     } else if mode == "rebuild" {
         let build_mode = parse_build_mode(&args, 2);
         clean()?;
         build(&project, build_mode)?;
-    } else if mode == "run" {
+    } else if mode == "run" || mode == "r" {
         let build_mode = parse_build_mode(&args, 2);
         run(&project, build_mode)?;
     } else if mode == "clean" {
