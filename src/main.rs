@@ -1,11 +1,13 @@
 use crate::project::{BuildMode, Project};
+use crate::result::{BargeError, Result};
 use ansi_term::{Color, Style};
 use lazy_static::lazy_static;
-use std::io::{Result, Write};
+use std::io::Write;
 use std::process::{Command, Stdio};
 use std::time::Instant;
 
 mod project;
+mod result;
 
 lazy_static! {
     static ref BLUE: Style = Style::new().bold().fg(Color::Blue);
@@ -103,10 +105,10 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = project.generate_makefile(build_mode);
+    let makefile = project.generate_makefile(build_mode)?;
     make.stdin
         .as_mut()
-        .unwrap()
+        .ok_or(BargeError::NoneOption)?
         .write_all(makefile.as_bytes())?;
     make.wait()?;
 
@@ -151,7 +153,7 @@ fn lines() -> Result<()> {
         .output()?
         .stdout;
 
-    let mut find: Vec<_> = std::str::from_utf8(&find).unwrap().split("\n").collect();
+    let mut find: Vec<_> = std::str::from_utf8(&find)?.split("\n").collect();
     find.retain(|str| str.len() != 0);
 
     let cat = Command::new("cat")
@@ -161,10 +163,10 @@ fn lines() -> Result<()> {
 
     let wc = Command::new("wc")
         .arg("-l")
-        .stdin(Stdio::from(cat.stdout.unwrap()))
+        .stdin(Stdio::from(cat.stdout.ok_or(BargeError::NoneOption)?))
         .output()?
         .stdout;
-    let mut wc = String::from(std::str::from_utf8(&wc).unwrap());
+    let mut wc = String::from(std::str::from_utf8(&wc)?);
     wc.pop();
 
     color_println!(BLUE, "The project contains {} lines of code.", wc);

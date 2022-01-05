@@ -92,8 +92,6 @@ This following simple example covers all the things specified above.
 Future improvements, TODOs
 --------------------------
 
-1. Right now, the software is very error-prone, because the unwrap() function is
-   heavily used. This should be replaced with proper error handling.
-2. Subcommand to perform source code analysis via clang-tidy.
-3. Separate custom flags for C and C++.
-4. Add an option to set options for GNU make.
+1. Subcommand to perform source code analysis via clang-tidy.
+2. Separate custom flags for C and C++.
+3. Add an option to set options for GNU make.

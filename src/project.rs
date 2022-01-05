@@ -1,5 +1,5 @@
+use crate::result::{BargeError, Result};
 use serde::{Deserialize, Serialize};
-use std::io::Result;
 use std::process::Command;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -92,12 +92,12 @@ impl Project {
         Ok(project)
     }
 
-    pub fn generate_makefile(&self, build_mode: BuildMode) -> String {
+    pub fn generate_makefile(&self, build_mode: BuildMode) -> Result<String> {
         let common_cflags = "-Wall -Wextra -pedantic \
                              -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion \
                              -Iinclude -Isrc";
 
-        let (library_cflags, library_ldflags) = build_library_flags(&self.external_libraries);
+        let (library_cflags, library_ldflags) = build_library_flags(&self.external_libraries)?;
 
         let (mode_string, mode_cflags, mode_ldflags) = match build_mode {
             BuildMode::Debug => ("debug", "-Og", "-ggdb"),
@@ -105,13 +105,13 @@ impl Project {
         };
 
         let custom_cflags = if self.custom_cflags.is_some() {
-            self.custom_cflags.clone().unwrap()
+            self.custom_cflags.clone().ok_or(BargeError::NoneOption)?
         } else {
             String::new()
         };
 
         let custom_ldflags = if self.custom_ldflags.is_some() {
-            self.custom_ldflags.clone().unwrap()
+            self.custom_ldflags.clone().ok_or(BargeError::NoneOption)?
         } else {
             String::new()
         };
@@ -155,32 +155,31 @@ impl Project {
             mode_string
         );
 
-        result
+        Ok(result)
     }
 }
 
-fn call_pkg_config(name: &str, mode: &str) -> String {
+fn call_pkg_config(name: &str, mode: &str) -> Result<String> {
     let result = Command::new("pkg-config")
         .arg(name)
         .arg(mode)
-        .output()
-        .unwrap()
+        .output()?
         .stdout;
-    let mut result = std::str::from_utf8(&result).unwrap().to_string();
+    let mut result = std::str::from_utf8(&result)?.to_string();
     result.pop();
-    result
+    Ok(result)
 }
 
-fn build_library_flags(libraries: &Option<Vec<Library>>) -> (String, String) {
+fn build_library_flags(libraries: &Option<Vec<Library>>) -> Result<(String, String)> {
     let mut library_cflags = String::new();
     let mut library_ldflags = String::new();
 
     if let Some(libraries) = libraries {
-        libraries.iter().for_each(|library| {
+        for library in libraries {
             match library {
                 Library::PkgConfig { name } => {
-                    library_cflags.push_str(&call_pkg_config(&name, "--cflags"));
-                    library_ldflags.push_str(&call_pkg_config(&name, "--libs"));
+                    library_cflags.push_str(&call_pkg_config(&name, "--cflags")?);
+                    library_ldflags.push_str(&call_pkg_config(&name, "--libs")?);
                 }
                 Library::Manual { cflags, ldflags } => {
                     library_cflags.push_str(cflags);
@@ -190,8 +189,8 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> (String, String) {
 
             library_cflags.push_str(" ");
             library_ldflags.push_str(" ");
-        });
+        }
     }
 
-    (library_cflags, library_ldflags)
+    Ok((library_cflags, library_ldflags))
 }
