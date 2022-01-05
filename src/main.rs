@@ -98,10 +98,19 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
     color_println!(BLUE, "Building project in {} mode", mode_string);
     let start_time = Instant::now();
 
+    let makeopts = if let Some(makeopts) = &project.custom_makeopts {
+        makeopts.split(" ").collect()
+    } else {
+        vec![]
+    };
+
+    println!("{:?}", makeopts);
+
     let mut make = Command::new("make")
         .arg("-f")
         .arg("-")
         .arg("all")
+        .args(makeopts)
         .stdin(Stdio::piped())
         .spawn()?;
 

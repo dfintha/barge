@@ -19,6 +19,7 @@ pub(crate) struct Project {
     pub custom_cflags: Option<String>,
     pub custom_cxxflags: Option<String>,
     pub custom_ldflags: Option<String>,
+    pub custom_makeopts: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy)]
