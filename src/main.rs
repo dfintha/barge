@@ -168,8 +168,8 @@ fn lines() -> Result<()> {
     Ok(())
 }
 
-fn parse_build_mode(args: &Vec<String>) -> BuildMode {
-    if args.len() < 3 || &args[2] != "--release" {
+fn parse_build_mode(args: &Vec<String>, index: usize) -> BuildMode {
+    if args.len() < (index + 1) || &args[index] != "--release" {
         BuildMode::Debug
     } else {
         BuildMode::Release
@@ -195,10 +195,10 @@ fn main() -> Result<()> {
 
     let project = Project::load("barge.json")?;
     if mode == "build" {
-        let build_mode = parse_build_mode(&args);
+        let build_mode = parse_build_mode(&args, 2);
         build(&project, build_mode)?;
     } else if mode == "run" {
-        let build_mode = parse_build_mode(&args);
+        let build_mode = parse_build_mode(&args, 2);
         run(&project, build_mode)?;
     } else if mode == "clean" {
         clean()?;
