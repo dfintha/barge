@@ -31,6 +31,17 @@ their respective dedicated folders ('include' and 'src') and their subfolder.
 As such, header files shall be added to the 'include' directory, and source
 files shall be added to the 'src' directory.
 
+Build modes
+-----------
+
+The user can specify for the 'build' and 'run' subcommands the corresponding
+build mode by adding either the '--debug' or the '--release' argument directly
+after them.
+
+In debug build mode, the resulting executable is optimized for debugging in the
+GNU debugger (gdb). In release mode, the executable is optimized for speed, and
+also stripped, makint it smaller in size, but also near impossible to debug.
+
 The configuration file
 ----------------------
 
