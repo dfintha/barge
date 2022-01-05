@@ -64,7 +64,9 @@ As of now, the user can specify the settings to their project by changing
   - Using pkg-build: { type: "pkgbuild", name: "<package name>" }
   - Manually specifying flags: { type: "manual", "cflags": "", ldflags: "-lm"}
 - custom_cflags (string):
-  Adds the flags specified here to the source file compilation command line.
+  Adds the flags specified here to the C source file compilation command line.
+- custom_cxxflags (string):
+  Adds the flags specified here to the C++ source file compilation command line.
 - custom_ldflags (string):
   Adds the flags specified here to the executable linking command line.
 
@@ -85,7 +87,8 @@ This following simple example covers all the things specified above.
             "ldflags": "-lpthread"
         },
     ],
-    "custom_cflags": "-DNDEBUG"
+    "custom_cflags": "-DNDEBUG",
+    "custom_cxxflags": "-DNDEBUG",
     "custom_ldflags": "-ggdb"
 }
 
@@ -93,5 +96,4 @@ Future improvements, TODOs
 --------------------------
 
 1. Subcommand to perform source code analysis via clang-tidy.
-2. Separate custom flags for C and C++.
-3. Add an option to set options for GNU make.
+2. Add an option to set options for GNU make.

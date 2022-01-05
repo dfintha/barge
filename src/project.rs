@@ -17,6 +17,7 @@ pub(crate) struct Project {
     pub cpp_standard: String,
     pub external_libraries: Option<Vec<Library>>,
     pub custom_cflags: Option<String>,
+    pub custom_cxxflags: Option<String>,
     pub custom_ldflags: Option<String>,
 }
 
@@ -110,6 +111,12 @@ impl Project {
             String::new()
         };
 
+        let custom_cxxflags = if self.custom_cxxflags.is_some() {
+            self.custom_cflags.clone().ok_or(BargeError::NoneOption)?
+        } else {
+            String::new()
+        };
+
         let custom_ldflags = if self.custom_ldflags.is_some() {
             self.custom_ldflags.clone().ok_or(BargeError::NoneOption)?
         } else {
@@ -136,7 +143,7 @@ impl Project {
             + " "
             + mode_cflags
             + " "
-            + &custom_cflags;
+            + &custom_cxxflags;
 
         let ldflags = library_ldflags + " " + &custom_ldflags + " " + mode_ldflags;
 
