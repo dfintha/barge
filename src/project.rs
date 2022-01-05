@@ -20,23 +20,29 @@ pub(crate) struct Project {
     pub custom_ldflags: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum BuildMode {
+    Debug,
+    Release,
+}
+
 macro_rules! makefile_template {
     () => {
         "
 CC=clang
-CFLAGS=-std={} {} {} {}
+CFLAGS={}
 CSRC=$(shell find src -type f -name '*.c')
-COBJ=$(patsubst src/%.c,obj/%.c.o,$(CSRC))
+COBJ=$(patsubst src/%.c,obj/{}/%.c.o,$(CSRC))
 
 CXX=clang++
-CXXFLAGS=-std={} {} {} {}
+CXXFLAGS={}
 CXXSRC=$(shell find src -type f -name '*.cpp')
-CXXOBJ=$(patsubst src/%.cpp,obj/%.cpp.o,$(CXXSRC))
+CXXOBJ=$(patsubst src/%.cpp,obj/{}/%.cpp.o,$(CXXSRC))
 
-LDFLAGS={} {}
+LDFLAGS={}
 
 NAME={}
-BINARY=bin/$(NAME)
+BINARY=bin/{}/$(NAME)
 SOURCES=$(CSRC) $(CXXSRC)
 OBJECTS=$(COBJ) $(CXXOBJ)
 HEADERS=$(shell find include -name '*.h*')
@@ -56,12 +62,12 @@ $(BINARY): $(COBJ) $(CXXOBJ)
 \t@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 \t@printf '%sBuilt target %s%s\\n' $(BLUE) $(NAME) $(RESET)
 
-obj/%.c.o: src/%.c $(HEADERS)
+obj/{}/%.c.o: src/%.c $(HEADERS)
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding C object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CC) $(CFLAGS) -c $< -o $@
 
-obj/%.cpp.o: src/%.cpp $(HEADERS)
+obj/{}/%.cpp.o: src/%.cpp $(HEADERS)
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding C++ object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -76,9 +82,17 @@ impl Project {
         Ok(project)
     }
 
-    pub fn generate_makefile(&self) -> String {
-        let common_cflags = "-Wall -Wextra -pedantic -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion -Iinclude -Isrc";
+    pub fn generate_makefile(&self, build_mode: BuildMode) -> String {
+        let common_cflags = "-Wall -Wextra -pedantic \
+                             -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion \
+                             -Iinclude -Isrc";
+
         let (library_cflags, library_ldflags) = build_library_flags(&self.external_libraries);
+
+        let (mode_string, mode_cflags, mode_ldflags) = match build_mode {
+            BuildMode::Debug => ("debug", "-Og", "-ggdb"),
+            BuildMode::Release => ("release", "-DNDEBUG -O2 -ffast-math", "-s"),
+        };
 
         let custom_cflags = if self.custom_cflags.is_some() {
             self.custom_cflags.clone().unwrap()
@@ -92,19 +106,41 @@ impl Project {
             String::new()
         };
 
+        let cflags = String::from("-std=")
+            + &self.c_standard
+            + " "
+            + common_cflags
+            + " "
+            + &library_cflags
+            + " "
+            + mode_cflags
+            + " "
+            + &custom_cflags;
+
+        let cxxflags = String::from("-std=")
+            + &self.cpp_standard
+            + " "
+            + common_cflags
+            + " "
+            + &library_cflags
+            + " "
+            + mode_cflags
+            + " "
+            + &custom_cflags;
+
+        let ldflags = library_ldflags + " " + &custom_ldflags + " " + mode_ldflags;
+
         let result = format!(
             makefile_template!(),
-            self.c_standard,
-            common_cflags,
-            library_cflags,
-            custom_cflags,
-            self.cpp_standard,
-            common_cflags,
-            library_cflags,
-            custom_cflags,
-            library_ldflags,
-            custom_ldflags,
-            self.name
+            cflags,
+            mode_string,
+            cxxflags,
+            mode_string,
+            ldflags,
+            self.name,
+            mode_string,
+            mode_string,
+            mode_string
         );
 
         result

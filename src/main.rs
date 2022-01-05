@@ -1,4 +1,4 @@
-use crate::project::Project;
+use crate::project::{BuildMode, Project};
 use ansi_term::*;
 use std::io::{Result, Write};
 use std::process::{Command, Stdio};
@@ -62,7 +62,22 @@ fn init(name: &str) -> Result<()> {
     Ok(())
 }
 
-fn build(project: &Project) -> Result<()> {
+fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
+    let mode_string = match build_mode {
+        BuildMode::Debug => "debug",
+        BuildMode::Release => "release",
+    };
+
+    println!(
+        "{} {} {}",
+        Style::new()
+            .bold()
+            .fg(Color::Blue)
+            .paint("Building project in"),
+        Style::new().bold().fg(Color::Blue).paint(mode_string),
+        Style::new().bold().fg(Color::Blue).paint("mode")
+    );
+
     let mut make = Command::new("make")
         .arg("-f")
         .arg("-")
@@ -70,7 +85,7 @@ fn build(project: &Project) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = project.generate_makefile();
+    let makefile = project.generate_makefile(build_mode);
     make.stdin
         .as_mut()
         .unwrap()
@@ -79,24 +94,26 @@ fn build(project: &Project) -> Result<()> {
     Ok(())
 }
 
-fn run(project: &Project) -> Result<()> {
-    build(project)?;
+fn run(project: &Project, build_mode: BuildMode) -> Result<()> {
+    build(project, build_mode)?;
+
+    let mode_string = match build_mode {
+        BuildMode::Debug => "debug",
+        BuildMode::Release => "release",
+    };
+
+    let path = String::from("bin/") + &mode_string + "/" + &project.name;
 
     println!(
-        "{}{}",
+        "{} {}",
         Style::new()
             .bold()
-            .fg(Color::Green)
-            .paint("Running executable bin/"),
-        Style::new()
-            .bold()
-            .fg(Color::Green)
-            .paint(project.name.clone())
+            .fg(Color::Blue)
+            .paint("Running executable"),
+        Style::new().bold().fg(Color::Blue).paint(&path)
     );
-    Command::new(format!("bin/{}", project.name.clone()).as_str())
-        .spawn()?
-        .wait()?;
 
+    Command::new(format!("{}", &path)).spawn()?.wait()?;
     Ok(())
 }
 
@@ -105,8 +122,8 @@ fn clean() -> Result<()> {
         "{}",
         Style::new()
             .bold()
-            .fg(Color::Red)
-            .paint("Removing build artifacts.")
+            .fg(Color::Blue)
+            .paint("Removing build artifacts")
     );
     let _bin = std::fs::remove_dir_all("bin");
     let _obj = std::fs::remove_dir_all("obj");
@@ -140,15 +157,23 @@ fn lines() -> Result<()> {
     wc.pop();
 
     println!(
-        "{}{}{}",
+        "{} {} {}",
         Style::new()
             .bold()
             .fg(Color::Blue)
-            .paint("The project contains "),
+            .paint("The project contains"),
         Style::new().bold().fg(Color::Blue).paint(wc),
-        Style::new().bold().fg(Color::Blue).paint(" lines of code.")
+        Style::new().bold().fg(Color::Blue).paint("lines of code.")
     );
     Ok(())
+}
+
+fn parse_build_mode(args: &Vec<String>) -> BuildMode {
+    if args.len() < 3 || &args[2] != "--release" {
+        BuildMode::Debug
+    } else {
+        BuildMode::Release
+    }
 }
 
 fn main() -> Result<()> {
@@ -170,9 +195,11 @@ fn main() -> Result<()> {
 
     let project = Project::load("barge.json")?;
     if mode == "build" {
-        build(&project)?;
+        let build_mode = parse_build_mode(&args);
+        build(&project, build_mode)?;
     } else if mode == "run" {
-        run(&project)?;
+        let build_mode = parse_build_mode(&args);
+        run(&project, build_mode)?;
     } else if mode == "clean" {
         clean()?;
     } else if mode == "lines" {

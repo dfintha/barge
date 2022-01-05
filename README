@@ -79,7 +79,7 @@ Future improvements, TODOs
 
 1. Right now, the software is very error-prone, because the unwrap() function is
    heavily used. This should be replaced with proper error handling.
-2. An option to build in release mode is an obvious requirement.
-3. Subcommand to perform source code analysis via clang-tidy.
-4. Separate custom flags for C and C++.
-5. Add an option to include assembly sources, compiled via nasm or yasm.
+2. Subcommand to perform source code analysis via clang-tidy.
+3. Separate custom flags for C and C++.
+4. (Add an option to include assembly sources, compiled via nasm or yasm.)
+5. Add an option to set options for GNU make.
