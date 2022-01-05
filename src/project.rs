@@ -53,7 +53,7 @@ OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ)
 HEADERS=$(shell find include -name '*.h*')
 
 GREEN=`tput setaf 2``tput bold`
-BLUE=`tput setaf 5``tput bold`
+BLUE=`tput setaf 4``tput bold`
 RESET=`tput sgr0`
 DIM=`tput dim`
 
