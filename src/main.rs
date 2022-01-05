@@ -1,4 +1,5 @@
 use crate::project::Project;
+use ansi_term::*;
 use std::io::{Result, Write};
 use std::process::{Command, Stdio};
 
@@ -49,7 +50,15 @@ fn init(name: &str) -> Result<()> {
         file.write_all("bin/*\nobj/*\n".as_bytes())?;
     }
     Command::new("git").arg("init").arg(name).output()?;
-    println!("Project '{}' successfully created.", name);
+    println!(
+        "{}{}{}",
+        Style::new().bold().fg(Color::Green).paint("Project '"),
+        Style::new().bold().fg(Color::Green).paint(name),
+        Style::new()
+            .bold()
+            .fg(Color::Green)
+            .paint("' successfully created.")
+    );
     Ok(())
 }
 
@@ -71,7 +80,13 @@ fn build(project: &Project) -> Result<()> {
 }
 
 fn clean() -> Result<()> {
-    println!("Removing build artifacts.");
+    println!(
+        "{}",
+        Style::new()
+            .bold()
+            .fg(Color::Red)
+            .paint("Removing build artifacts.")
+    );
     let _bin = std::fs::remove_dir_all("bin");
     let _obj = std::fs::remove_dir_all("obj");
     Ok(())
@@ -103,7 +118,15 @@ fn lines() -> Result<()> {
     let mut wc = String::from(std::str::from_utf8(&wc).unwrap());
     wc.pop();
 
-    println!("The project contains {} lines of code.", wc);
+    println!(
+        "{}{}{}",
+        Style::new()
+            .bold()
+            .fg(Color::Blue)
+            .paint("The project contains "),
+        Style::new().bold().fg(Color::Blue).paint(wc),
+        Style::new().bold().fg(Color::Blue).paint(" lines of code.")
+    );
     Ok(())
 }
 

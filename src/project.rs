@@ -35,29 +35,35 @@ CXXOBJ=$(patsubst src/%.cpp,obj/%.cpp.o,$(CXXSRC))
 
 LDFLAGS={} {}
 
-BINARY=bin/{}
+NAME={}
+BINARY=bin/$(NAME)
 SOURCES=$(CSRC) $(CXXSRC)
 OBJECTS=$(COBJ) $(CXXOBJ)
 HEADERS=$(shell find include -name '*.h*')
 
+GREEN=`tput setaf 2``tput bold`
+BLUE=`tput setaf 5``tput bold`
+RESET=`tput sgr0`
+DIM=`tput dim`
+
 .PHONY: all
 
 all: $(BINARY)
-\t@printf 'Build successful!\\n'
 
 $(BINARY): $(COBJ) $(CXXOBJ)
 \t@mkdir -p $(shell dirname $@)
-\t@printf 'Linking project executable.\\n'
+\t@printf '%sLinking executable %s%s\\n' $(GREEN) $@ $(RESET)
 \t@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
+\t@printf '%sBuilt target %s%s\\n' $(BLUE) $(NAME) $(RESET)
 
 obj/%.c.o: src/%.c $(HEADERS)
 \t@mkdir -p $(shell dirname $@)
-\t@printf 'Building C object %s.\\n' $@
+\t@printf '%s%sBuilding C object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CC) $(CFLAGS) -c $< -o $@
 
 obj/%.cpp.o: src/%.cpp $(HEADERS)
 \t@mkdir -p $(shell dirname $@)
-\t@printf 'Building C++ object %s.\\n' $@
+\t@printf '%s%sBuilding C++ object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CXX) $(CXXFLAGS) -c $< -o $@
 "
     };
