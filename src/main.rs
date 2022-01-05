@@ -34,6 +34,7 @@ The available subcommands are:
     init [NAME]         Create a new project named NAME in a new directory
     run, r [MODE]       Runs the binary of the current project
     rebuild [MODE]      Removed build artifacts, and builds the project
+    analyze             Perform static analysis on the project
 
 The MODE argument can be either 'debug' or 'release'. If non given, the default
 is 'debug'."
@@ -59,6 +60,22 @@ int main() {
     std::cout << \"Hello, world!\" << std::endl;
     return 0;
 }
+"
+    };
+}
+
+macro_rules! analyze_template {
+    () => {
+        "
+CSRC=$(shell find src -type f -name '*.c')
+CXXSRC=$(shell find src -type f -name '*.cpp')
+PFLAGS=-Iinclude -Isrc
+WFLAGS=-Wall -Wextra -pedantic -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion
+FLAGS=$(PFLAGS) $(WFLAGS)
+.PHONY: analyze
+analyze: $(CSRC) $(CXXSRC)
+\t@[ \"$(CSRC)\" != \"\" ] && clang-tidy $(CSRC) -- -std={} $(FLAGS) || true
+\t@[ \"$(CXXSRC)\" != \"\" ] && clang-tidy $(CXXSRC) -- -std={} $(FLAGS) || true
 "
     };
 }
@@ -128,6 +145,27 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         "Build finished in {:.2} seconds.",
         build_duration.as_secs_f64()
     );
+    Ok(())
+}
+
+fn analyze(project: &Project) -> Result<()> {
+    color_println!(BLUE, "Running static analysis on project");
+
+    let mut make = Command::new("make")
+        .arg("-f")
+        .arg("-")
+        .arg("analyze")
+        .stdin(Stdio::piped())
+        .spawn()?;
+
+    let makefile = format!(analyze_template!(), project.c_standard, project.cpp_standard);
+
+    make.stdin
+        .as_mut()
+        .ok_or(BargeError::NoneOption)?
+        .write_all(makefile.as_bytes())?;
+    make.wait()?;
+
     Ok(())
 }
 
@@ -224,6 +262,8 @@ fn main() -> Result<()> {
         clean()?;
     } else if mode == "lines" {
         lines()?;
+    } else if mode == "analyze" {
+        analyze(&project)?;
     } else {
         usage();
     }

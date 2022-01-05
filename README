@@ -27,6 +27,9 @@ following subcommands.
   folders.
 - lines:
   Prints the amount of source code lines to the standard output.
+- analyze:
+  Performs static analysis on the source files of the project. This is done by
+  using clang-tidy.
 
 All the source and headers files are automatically added to the build under
 their respective dedicated folders ('include' and 'src') and their subfolder.
@@ -94,8 +97,3 @@ This following simple example covers all the things specified above.
     "custom_ldflags": "-ggdb",
     "custom_makeopts": "-j2"
 }
-
-Future improvements, TODOs
---------------------------
-
-- Subcommand to perform source code analysis via clang-tidy.
