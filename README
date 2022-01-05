@@ -97,3 +97,17 @@ This following simple example covers all the things specified above.
     "custom_ldflags": "-ggdb",
     "custom_makeopts": "-j2"
 }
+
+Requirements
+------------
+
+Currently, barge only works in POSIX environments, and requires the following
+software (or equivalent) to correctly function.
+
+- GNU make (make)
+- GNU coreutils (cat, wc)
+- GNU findutils (find)
+- LLVM Clang (clang, clang++)
+- LLVM Clang-Tidy (clang-tidy)
+- Git (git)
+- pkgconf (pkg-config)
