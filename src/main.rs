@@ -209,20 +209,34 @@ fn clean() -> Result<()> {
 }
 
 fn lines() -> Result<()> {
-    let find = Command::new("find")
+    let find_src = Command::new("find")
         .arg("src")
-        .arg("-type")
-        .arg("f")
-        .arg("-name")
-        .arg("*.c*")
+        .args(vec!["-type", "f"])
+        .args(vec!["-name", "*.c"])
+        .args(vec!["-o", "-name", "*.cpp"])
+        .args(vec!["-o", "-name", "*.s"])
+        .args(vec!["-o", "-name", "*.h"])
+        .args(vec!["-o", "-name", "*.hpp"])
         .output()?
         .stdout;
 
-    let mut find: Vec<_> = std::str::from_utf8(&find)?.split('\n').collect();
-    find.retain(|str| !str.is_empty());
+    let mut find_src: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
+    find_src.retain(|str| !str.is_empty());
+
+    let find_include = Command::new("find")
+        .arg("include")
+        .args(vec!["-type", "f"])
+        .args(vec!["-name", "*.h"])
+        .args(vec!["-o", "-name", "*.hpp"])
+        .output()?
+        .stdout;
+
+    let mut find_include: Vec<_> = std::str::from_utf8(&find_include)?.split('\n').collect();
+    find_include.retain(|str| !str.is_empty());
 
     let cat = Command::new("cat")
-        .args(find)
+        .args(find_src)
+        .args(find_include)
         .stdout(Stdio::piped())
         .spawn()?;
 
