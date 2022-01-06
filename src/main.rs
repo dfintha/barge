@@ -2,6 +2,7 @@ use crate::project::{BuildMode, Project};
 use crate::result::{BargeError, Result};
 use ansi_term::{Color, Style};
 use lazy_static::lazy_static;
+use std::fs::File;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::time::Instant;
@@ -95,15 +96,15 @@ fn init(name: &str) -> Result<()> {
     std::fs::create_dir(path.clone() + "/include")?;
 
     {
-        let mut file = std::fs::File::create(path.clone() + "/barge.json")?;
+        let mut file = File::create(path.clone() + "/barge.json")?;
         file.write_all(format!(barge_template!(), name).as_bytes())?;
     }
     {
-        let mut file = std::fs::File::create(path.clone() + "/src/main.cpp")?;
+        let mut file = File::create(path.clone() + "/src/main.cpp")?;
         file.write_all(hello_template!().as_bytes())?;
     }
     {
-        let mut file = std::fs::File::create(path + "/.gitignore")?;
+        let mut file = File::create(path + "/.gitignore")?;
         file.write_all("bin/*\nobj/*\n".as_bytes())?;
     }
 
