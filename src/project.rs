@@ -195,8 +195,8 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> Result<(String, Stri
                 }
             }
 
-            library_cflags.push_str(" ");
-            library_ldflags.push_str(" ");
+            library_cflags.push(' ');
+            library_ldflags.push(' ');
         }
     }
 

@@ -96,7 +96,7 @@ fn init(name: &str) -> Result<()> {
         file.write_all(hello_template!().as_bytes())?;
     }
     {
-        let mut file = std::fs::File::create(path.clone() + "/.gitignore")?;
+        let mut file = std::fs::File::create(path + "/.gitignore")?;
         file.write_all("bin/*\nobj/*\n".as_bytes())?;
     }
 
@@ -116,7 +116,7 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
     let start_time = Instant::now();
 
     let makeopts = if let Some(makeopts) = &project.custom_makeopts {
-        makeopts.split(" ").collect()
+        makeopts.split(' ').collect()
     } else {
         vec![]
     };
@@ -156,7 +156,10 @@ fn analyze(project: &Project) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = format!(analyze_template!(), project.c_standard, project.cpp_standard);
+    let makefile = format!(
+        analyze_template!(),
+        project.c_standard, project.cpp_standard
+    );
 
     make.stdin
         .as_mut()
@@ -175,9 +178,9 @@ fn run(project: &Project, build_mode: BuildMode) -> Result<()> {
         BuildMode::Release => "release",
     };
 
-    let path = String::from("bin/") + &mode_string + "/" + &project.name;
+    let path = String::from("bin/") + mode_string + "/" + &project.name;
     color_println!(BLUE, "Running executable {}", &path);
-    Command::new(format!("{}", &path)).spawn()?.wait()?;
+    Command::new(&path).spawn()?.wait()?;
     Ok(())
 }
 
@@ -198,8 +201,8 @@ fn lines() -> Result<()> {
         .output()?
         .stdout;
 
-    let mut find: Vec<_> = std::str::from_utf8(&find)?.split("\n").collect();
-    find.retain(|str| str.len() != 0);
+    let mut find: Vec<_> = std::str::from_utf8(&find)?.split('\n').collect();
+    find.retain(|str| !str.is_empty());
 
     let cat = Command::new("cat")
         .args(find)
@@ -218,7 +221,7 @@ fn lines() -> Result<()> {
     Ok(())
 }
 
-fn parse_build_mode(args: &Vec<String>, index: usize) -> BuildMode {
+fn parse_build_mode(args: &[String], index: usize) -> BuildMode {
     if args.len() < (index + 1) || &args[index] == "debug" {
         BuildMode::Debug
     } else if &args[index] == "release" {
