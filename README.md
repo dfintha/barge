@@ -81,7 +81,7 @@ following fields.
 - custom_makeopts (string, optional):
   Adds the flags specified here to the GNU make command line.
 
-This example covers all the things specified above.
+### Specific project file, which contains all the optional fields
 
 ```json
 {
@@ -103,5 +103,15 @@ This example covers all the things specified above.
     "custom_cxxflags": "-DNDEBUG",
     "custom_ldflags": "-ggdb",
     "custom_makeopts": "-j2"
+}
+```
+
+### Minimal project file, which contains no optional fields
+
+```json
+{
+    "name": "example",
+    "c_standard": "c99",
+    "cpp_standard": "c++14"
 }
 ```
