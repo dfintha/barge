@@ -12,12 +12,19 @@ mod result;
 lazy_static! {
     static ref BLUE: Style = Style::new().bold().fg(Color::Blue);
     static ref GREEN: Style = Style::new().bold().fg(Color::Green);
+    static ref RED: Style = Style::new().bold().fg(Color::Red);
     static ref WHITE: Style = Style::new().bold().fg(Color::White);
 }
 
 macro_rules! color_println {
     ($style:tt, $($arg:tt)*) => {
         println!("{}", $style.paint(format!($($arg)*)))
+    }
+}
+
+macro_rules! color_eprintln {
+    ($($arg:tt)*) => {
+        eprintln!("{}", RED.paint(format!($($arg)*)))
     }
 }
 
@@ -104,6 +111,15 @@ fn init(name: &str) -> Result<()> {
 
     color_println!(GREEN, "Project {} successfully created", name);
     Ok(())
+}
+
+fn in_project_folder() -> bool {
+    let metadata = std::fs::metadata("barge.json");
+    if let Ok(metadata) = metadata {
+        metadata.is_file()
+    } else {
+        false
+    }
 }
 
 fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
@@ -245,6 +261,11 @@ fn main() -> Result<()> {
             return Ok(());
         }
         init(&args[2])?;
+        return Ok(());
+    }
+
+    if !in_project_folder() {
+        color_eprintln!("This command must be run in a project folder, which contains barge.json");
         return Ok(());
     }
 
