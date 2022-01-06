@@ -121,8 +121,6 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         vec![]
     };
 
-    println!("{:?}", makeopts);
-
     let mut make = Command::new("make")
         .arg("-f")
         .arg("-")
