@@ -21,26 +21,6 @@ macro_rules! color_println {
     }
 }
 
-fn usage() {
-    println!(
-        "A very basic build tool for very basic assembly/C/C++ projects.
-
-USAGE:
-    barge [SUBCOMMAND] [OPTIONS]
-
-The available subcommands are:
-    build, b [MODE]     Builds the current project in the given build mode
-    clean               Remove the build artifacts
-    init [NAME]         Create a new project named NAME in a new directory
-    run, r [MODE]       Runs the binary of the current project
-    rebuild [MODE]      Removed build artifacts, and builds the project
-    analyze             Perform static analysis on the project
-
-The MODE argument can be either 'debug' or 'release'. If non given, the default
-is 'debug'."
-    );
-}
-
 macro_rules! barge_template {
     () => {
         "{{
@@ -78,6 +58,26 @@ analyze: $(CSRC) $(CXXSRC)
 \t@[ \"$(CXXSRC)\" != \"\" ] && clang-tidy $(CXXSRC) -- -std={} $(FLAGS) || true
 "
     };
+}
+
+fn usage() {
+    println!(
+        "A very basic build tool for very basic assembly/C/C++ projects.
+
+USAGE:
+    barge [SUBCOMMAND] [OPTIONS]
+
+The available subcommands are:
+    build, b [MODE]     Builds the current project in the given build mode
+    clean               Remove the build artifacts
+    init [NAME]         Create a new project named NAME in a new directory
+    run, r [MODE]       Runs the binary of the current project
+    rebuild [MODE]      Removed build artifacts, and builds the project
+    analyze             Perform static analysis on the project
+
+The MODE argument can be either 'debug' or 'release'. If non given, the default
+is 'debug'."
+    );
 }
 
 fn init(name: &str) -> Result<()> {
