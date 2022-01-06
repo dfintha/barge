@@ -47,6 +47,14 @@ On Arch Linux, the following command installs all the required packages.
 - `lines`: Displays the amount of lines of source code for the whole project.
 - `analyze`: Performs static analysis for the C/C++ source files in the project.
 
+The `build`, `rebuild`, and `run` subcommands have an optional argument, which
+represents the mode of the build. The currently supported modes are `debug` and
+`release`. If none is specified, `debug` is the default.
+
+In `debug` build mode, the executable contains its debug symbols, and is
+optimized for debugging, while in `release` mode, the symbols are stripped, and
+the executable is optimized for fast execution.
+
 ## The project file
 
 The user can specify the settings to their project by changing `barge.json` at
