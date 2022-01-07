@@ -97,7 +97,7 @@ following fields.
             "type": "manual",
             "cflags": "",
             "ldflags": "-lpthread"
-        },
+        }
     ],
     "custom_cflags": "-DNDEBUG",
     "custom_cxxflags": "-DNDEBUG",
