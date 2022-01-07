@@ -1,4 +1,5 @@
-use crate::project::{BuildMode, Project};
+use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildMode};
+use crate::project::Project;
 use crate::result::{BargeError, Result};
 use ansi_term::{Color, Style};
 use lazy_static::lazy_static;
@@ -7,6 +8,7 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 use std::time::Instant;
 
+mod makefile;
 mod project;
 mod result;
 
@@ -48,22 +50,6 @@ int main() {
     std::cout << \"Hello, world!\" << std::endl;
     return 0;
 }
-"
-    };
-}
-
-macro_rules! analyze_template {
-    () => {
-        "
-CSRC=$(shell find src -type f -name '*.c')
-CXXSRC=$(shell find src -type f -name '*.cpp')
-PFLAGS=-Iinclude -Isrc
-WFLAGS=-Wall -Wextra -pedantic -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion
-FLAGS=$(PFLAGS) $(WFLAGS)
-.PHONY: analyze
-analyze: $(CSRC) $(CXXSRC)
-\t@[ \"$(CSRC)\" != \"\" ] && clang-tidy $(CSRC) -- -std={} $(FLAGS) || true
-\t@[ \"$(CXXSRC)\" != \"\" ] && clang-tidy $(CXXSRC) -- -std={} $(FLAGS) || true
 "
     };
 }
@@ -146,7 +132,7 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = project.generate_makefile(build_mode)?;
+    let makefile = generate_build_makefile(&project, build_mode)?;
     make.stdin
         .as_mut()
         .ok_or(BargeError::NoneOption)?
@@ -173,10 +159,7 @@ fn analyze(project: &Project) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = format!(
-        analyze_template!(),
-        project.c_standard, project.cpp_standard
-    );
+    let makefile = generate_analyze_makefile(&project)?;
 
     make.stdin
         .as_mut()
