@@ -100,15 +100,6 @@ fn init(name: &str) -> Result<()> {
     Ok(())
 }
 
-fn in_project_folder() -> bool {
-    let metadata = std::fs::metadata("barge.json");
-    if let Ok(metadata) = metadata {
-        metadata.is_file()
-    } else {
-        false
-    }
-}
-
 fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
     let mode_string = match build_mode {
         BuildMode::Debug => "debug",
@@ -235,6 +226,14 @@ fn lines() -> Result<()> {
     Ok(())
 }
 
+fn in_project_folder() -> bool {
+    let metadata = std::fs::metadata("barge.json");
+    if let Ok(metadata) = metadata {
+        metadata.is_file()
+    } else {
+        false
+    }
+}
 fn parse_build_mode(args: &[String], index: usize) -> BuildMode {
     if args.len() < (index + 1) || &args[index] == "debug" {
         BuildMode::Debug
