@@ -79,7 +79,9 @@ following fields.
 - custom_ldflags (string, optional):
   Adds the flags specified here to the executable linking command line.
 - custom_makeopts (string, optional):
-  Adds the flags specified here to the GNU make command line.
+  Adds the flags specified here to the GNU make command line. If none given, the default makeopts
+  will only specify the amount of parallel jobs. This is the minimum of the logical cores and the
+  amount of free memory divided by 2 GiB.
 
 ### Specific project file, which contains all the optional fields
 

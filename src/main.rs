@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::time::Instant;
+use sysinfo::SystemExt;
 
 mod makefile;
 mod project;
@@ -110,9 +111,9 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
     let start_time = Instant::now();
 
     let makeopts = if let Some(makeopts) = &project.custom_makeopts {
-        makeopts.split(' ').collect()
+        makeopts.split(' ').map(|str| str.to_string()).collect()
     } else {
-        vec![]
+        generate_default_makeopts()?
     };
 
     let mut make = Command::new("make")
@@ -234,6 +235,24 @@ fn in_project_folder() -> bool {
         false
     }
 }
+
+fn generate_default_makeopts() -> Result<Vec<String>> {
+    let mut system = sysinfo::System::new_all();
+    system.refresh_all();
+
+    let processor_cores = system.processors().len() as u64;
+    let free_memory_in_kb = system.total_memory() - system.used_memory();
+    let free_2g_memory = free_memory_in_kb / (2 * 1024 * 1024);
+
+    let parallel_jobs = if free_2g_memory < processor_cores {
+        free_2g_memory
+    } else {
+        processor_cores
+    };
+
+    Ok(vec![format!("-j{}", parallel_jobs)])
+}
+
 fn parse_build_mode(args: &[String], index: usize) -> BuildMode {
     if args.len() < (index + 1) || &args[index] == "debug" {
         BuildMode::Debug
