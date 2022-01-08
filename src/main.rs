@@ -243,12 +243,7 @@ fn generate_default_makeopts() -> Result<Vec<String>> {
     let processor_cores = system.processors().len() as u64;
     let free_memory_in_kb = system.total_memory() - system.used_memory();
     let free_2g_memory = free_memory_in_kb / (2 * 1024 * 1024);
-
-    let parallel_jobs = if free_2g_memory < processor_cores {
-        free_2g_memory
-    } else {
-        processor_cores
-    };
+    let parallel_jobs = std::cmp::max(1, std::cmp::min(processor_cores, free_2g_memory));
 
     Ok(vec![format!("-j{}", parallel_jobs)])
 }
