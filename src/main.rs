@@ -130,7 +130,9 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
     let makefile = generate_build_makefile(&project, build_mode)?;
     make.stdin
         .as_mut()
-        .ok_or(BargeError::NoneOption)?
+        .ok_or(BargeError::NoneOption(
+            "Could not interact with make".to_string(),
+        ))?
         .write_all(makefile.as_bytes())?;
     make.wait()?;
 
@@ -158,7 +160,9 @@ fn analyze(project: &Project) -> Result<()> {
 
     make.stdin
         .as_mut()
-        .ok_or(BargeError::NoneOption)?
+        .ok_or(BargeError::NoneOption(
+            "Could not interact with make".to_string(),
+        ))?
         .write_all(makefile.as_bytes())?;
     make.wait()?;
 
@@ -201,7 +205,9 @@ fn lines() -> Result<()> {
 
     let wc = Command::new("wc")
         .arg("-l")
-        .stdin(Stdio::from(cat.stdout.ok_or(BargeError::NoneOption)?))
+        .stdin(Stdio::from(cat.stdout.ok_or(BargeError::NoneOption(
+            "Could not get file list".to_string(),
+        ))?))
         .output()?
         .stdout;
     let mut wc = String::from(std::str::from_utf8(&wc)?);
@@ -290,7 +296,7 @@ fn collect_source_files() -> Result<Vec<String>> {
     Ok(found.iter().map(|s| s.to_string()).collect())
 }
 
-fn main() -> Result<()> {
+fn parse_and_run_subcommands() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         usage();
@@ -336,4 +342,18 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn main() -> Result<()> {
+    let result = parse_and_run_subcommands();
+    if let Err(error) = &result {
+        match error {
+            BargeError::StdIoError(e) => color_eprintln!("I/O error: {}", e.to_string()),
+            BargeError::StdStrUtf8Error(e) => color_eprintln!("UTF-8 error: {}", e.to_string()),
+            BargeError::SerdeJsonError(e) => color_eprintln!("JSON error: {}", e.to_string()),
+            BargeError::NoneOption(s) => color_eprintln!("Missing value error: {}", s),
+        };
+        std::process::exit(1);
+    }
+    std::process::exit(0);
 }

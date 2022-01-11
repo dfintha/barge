@@ -5,7 +5,7 @@ pub(crate) enum BargeError {
     StdIoError(std::io::Error),
     StdStrUtf8Error(std::str::Utf8Error),
     SerdeJsonError(serde_json::Error),
-    NoneOption,
+    NoneOption(String),
 }
 
 impl From<std::io::Error> for BargeError {
