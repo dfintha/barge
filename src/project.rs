@@ -20,6 +20,7 @@ pub(crate) struct Project {
     pub custom_cxxflags: Option<String>,
     pub custom_ldflags: Option<String>,
     pub custom_makeopts: Option<String>,
+    pub format_style: Option<String>,
 }
 
 impl Project {

@@ -27,8 +27,9 @@ for proper functionality.
 - `findutils (find)`: Used internally to collect project files.
 - `make`: Used internally to perform various tasks on the project.
 - `nasm`: Used to compile Assembly source files.
-- `clang (clang, clang++, clang-tidy)`: Used to compile C/C++ source files, to
-  link the executable, and to run static analysis on the code.
+- `clang (clang, clang++, clang-tidy, clang-format)`: Used to compile C/C++
+  source files, to link the executable, to run static analysis on the code, and
+  to automatically format the code.
 - `git`: Used to initialize a `git`˙repository on project creation.
 
 On Arch Linux, the following command installs the packages of all the required
@@ -51,6 +52,7 @@ dependencies.
 - `run [MODE]`, `r`: Builds and executes the project executable.
 - `lines`: Displays the amount of lines of source code for the whole project.
 - `analyze`: Performs static analysis for the C/C++ source files in the project.
+- `format`: Formats the source files in-place using `clang-format`.
 
 The `build`, `rebuild`, and `run` subcommands have an optional argument, which
 represents the mode of the build. The currently supported modes are `debug` and
@@ -89,6 +91,11 @@ following fields.
   Adds the flags specified here to the GNU make command line. If none given, the default makeopts
   will only specify the amount of parallel jobs. This is the minimum of the logical cores and the
   amount of free memory divided by 2 GiB.
+- **format_style (string, optional)**:
+  The style in which clang-format formats the project sources. If none given, the default is Google.
+  The supported format styles are the ones supported by `clang-format`. If `file` is given,
+  `clang-format` will look for a `.clang-format` file in parent directories relative to the given
+  source file.
 
 ### Specific project file, which contains all the optional fields
 
@@ -112,7 +119,8 @@ following fields.
     "custom_cflags": "-DNDEBUG",
     "custom_cxxflags": "-DNDEBUG",
     "custom_ldflags": "-ggdb",
-    "custom_makeopts": "-j2"
+    "custom_makeopts": "-j2",
+    "format_style": "Google"
 }
 ```
 

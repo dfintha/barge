@@ -204,6 +204,25 @@ fn lines() -> Result<()> {
     Ok(())
 }
 
+fn format(project: &Project) -> Result<()> {
+    let sources = collect_source_files()?;
+    let style_arg = if let Some(format_style) = &project.format_style {
+        "--style=".to_string() + &format_style
+    } else {
+        "--style=Google".to_string()
+    };
+
+    Command::new("clang-format")
+        .arg("-i")
+        .arg(style_arg)
+        .args(sources)
+        .spawn()?
+        .wait()?;
+
+    color_println!(BLUE, "The project source files were formatted");
+    Ok(())
+}
+
 fn in_project_folder() -> bool {
     let metadata = std::fs::metadata("barge.json");
     if let Ok(metadata) = metadata {
@@ -303,6 +322,8 @@ fn main() -> Result<()> {
         lines()?;
     } else if mode == "analyze" {
         analyze(&project)?;
+    } else if mode == "format" {
+        format(&project)?;
     } else {
         usage();
     }
