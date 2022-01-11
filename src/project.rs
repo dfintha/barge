@@ -12,6 +12,7 @@ pub enum Library {
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Project {
     pub name: String,
+    pub version: String,
     pub c_standard: String,
     pub cpp_standard: String,
     pub external_libraries: Option<Vec<Library>>,

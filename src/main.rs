@@ -36,6 +36,7 @@ macro_rules! barge_template {
     () => {
         "{{
     \"name\": \"{}\",
+    \"version\": \"0.1.0\",
     \"c_standard\": \"c99\",
     \"cpp_standard\": \"c++14\"
 }}
