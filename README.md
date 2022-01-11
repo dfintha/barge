@@ -69,7 +69,9 @@ the project root. This file contains a single configuration object with the
 following fields.
 
 - **name (string)**:
-  The name of the project, and as such, the executable.
+  The name of the project.
+- **project_type (string)**:
+  The type of the project. Can be either `binary`, `shared_library`, or `static_library`.
 - **version (string)**:
   The version of the project.
 - **c_standard (string)**:
@@ -102,6 +104,7 @@ following fields.
 ```json
 {
     "name": "example",
+    "project_type": "binary",
     "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14",
@@ -129,6 +132,7 @@ following fields.
 ```json
 {
     "name": "example",
+    "project_type": "binary",
     "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14"

@@ -9,9 +9,18 @@ pub enum Library {
     Manual { cflags: String, ldflags: String },
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectType {
+    Binary,
+    SharedLibrary,
+    StaticLibrary,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Project {
     pub name: String,
+    pub project_type: ProjectType,
     pub version: String,
     pub c_standard: String,
     pub cpp_standard: String,

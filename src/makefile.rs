@@ -1,4 +1,4 @@
-use crate::project::{Library, Project};
+use crate::project::{Library, Project, ProjectType};
 use crate::result::{BargeError, Result};
 use std::process::Command;
 
@@ -46,7 +46,7 @@ all: $(BINARY)
 $(BINARY): $(COBJ) $(CXXOBJ) $(ASMOBJ)
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%sLinking executable %s%s\\n' $(GREEN) $@ $(RESET)
-\t@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
+\t{}
 \t@printf '%sBuilt target %s%s\\n' $(BLUE) $(NAME) $(RESET)
 
 obj/{}/%.s.o: src/%.s
@@ -122,6 +122,12 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
         String::new()
     };
 
+    let pic_flag = if project.project_type != ProjectType::Binary {
+        "-fPIC"
+    } else {
+        ""
+    };
+
     let cflags = String::from("-std=")
         + &project.c_standard
         + " "
@@ -131,7 +137,8 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
         + " "
         + mode_cflags
         + " "
-        + &custom_cflags;
+        + &custom_cflags
+        + pic_flag;
 
     let cxxflags = String::from("-std=")
         + &project.cpp_standard
@@ -142,9 +149,22 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
         + " "
         + mode_cflags
         + " "
-        + &custom_cxxflags;
+        + &custom_cxxflags
+        + pic_flag;
 
     let ldflags = library_ldflags + " " + &custom_ldflags + " " + mode_ldflags;
+
+    let name = match project.project_type {
+        ProjectType::Binary => project.name.clone(),
+        ProjectType::SharedLibrary => "lib".to_string() + &project.name + ".so",
+        ProjectType::StaticLibrary => "lib".to_string() + &project.name + ".a",
+    };
+
+    let link_command = match project.project_type {
+        ProjectType::Binary => "@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)",
+        ProjectType::SharedLibrary => "@$(CXX) -shared $(OBJECTS) -o $@ $(LDFLAGS)",
+        ProjectType::StaticLibrary => "@ar rcs $@ $(OBJECTS)",
+    };
 
     let result = format!(
         build_makefile_template!(),
@@ -154,8 +174,9 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
         cxxflags,
         mode_string,
         ldflags,
-        project.name,
+        name,
         mode_string,
+        link_command,
         mode_string,
         mode_string,
         mode_string

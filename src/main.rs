@@ -1,5 +1,5 @@
 use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildMode};
-use crate::project::Project;
+use crate::project::{Project, ProjectType};
 use crate::result::{BargeError, Result};
 use ansi_term::{Color, Style};
 use lazy_static::lazy_static;
@@ -36,6 +36,7 @@ macro_rules! barge_template {
     () => {
         "{{
     \"name\": \"{}\",
+    \"project_type\": \"binary\",
     \"version\": \"0.1.0\",
     \"c_standard\": \"c99\",
     \"cpp_standard\": \"c++14\"
@@ -165,6 +166,11 @@ fn analyze(project: &Project) -> Result<()> {
 }
 
 fn run(project: &Project, build_mode: BuildMode) -> Result<()> {
+    if project.project_type != ProjectType::Binary {
+        color_eprintln!("Only binary projects can be run");
+        return Ok(());
+    }
+
     build(project, build_mode)?;
 
     let mode_string = match build_mode {
