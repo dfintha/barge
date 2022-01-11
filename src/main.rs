@@ -136,7 +136,7 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
     let build_duration = finish_time - start_time;
     color_println!(
         BLUE,
-        "Build finished in {:.2} seconds.",
+        "Build finished in {:.2} seconds",
         build_duration.as_secs_f64()
     );
     Ok(())
