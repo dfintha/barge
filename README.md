@@ -79,7 +79,7 @@ following fields.
 - **external_libraries (list of objects, optional)**:
   The list of external libraries to link with. This is a list of objects, which
   are represented in one of the following ways.
-  - Using pkg-build: { type: "pkgbuild", name: "LIBRARY_NAME" }
+  - Using pkg-config: { type: "pkg_config", name: "LIBRARY_NAME" }
   - Manually specifying flags: { type: "manual", "cflags": "LIBRARY_CFLAGS", ldflags: "LIBRARY_LDFLAGS"}
 - **custom_cflags (string, optional)**:
   Adds the flags specified here to the C source file compilation command line.
@@ -107,7 +107,7 @@ following fields.
     "cpp_standard": "c++14",
     "external_libraries": [
         {
-            "type": "pkgconfig",
+            "type": "pkg_config",
             "name": "sdl"
         },
         {
