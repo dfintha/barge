@@ -26,7 +26,7 @@ CXXFLAGS={}
 CXXSRC=$(shell find src -type f -name '*.cpp')
 CXXOBJ=$(patsubst src/%.cpp,obj/{}/%.cpp.o,$(CXXSRC))
 
-LDFLAGS=-no-pie {}
+LDFLAGS={}
 
 NAME={}
 BINARY=bin/{}/$(NAME)
