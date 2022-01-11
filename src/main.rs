@@ -185,34 +185,10 @@ fn clean() -> Result<()> {
 }
 
 fn lines() -> Result<()> {
-    let find_src = Command::new("find")
-        .arg("src")
-        .args(vec!["-type", "f"])
-        .args(vec!["-name", "*.c"])
-        .args(vec!["-o", "-name", "*.cpp"])
-        .args(vec!["-o", "-name", "*.s"])
-        .args(vec!["-o", "-name", "*.h"])
-        .args(vec!["-o", "-name", "*.hpp"])
-        .output()?
-        .stdout;
-
-    let mut find_src: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
-    find_src.retain(|str| !str.is_empty());
-
-    let find_include = Command::new("find")
-        .arg("include")
-        .args(vec!["-type", "f"])
-        .args(vec!["-name", "*.h"])
-        .args(vec!["-o", "-name", "*.hpp"])
-        .output()?
-        .stdout;
-
-    let mut find_include: Vec<_> = std::str::from_utf8(&find_include)?.split('\n').collect();
-    find_include.retain(|str| !str.is_empty());
+    let sources = collect_source_files()?;
 
     let cat = Command::new("cat")
-        .args(find_src)
-        .args(find_include)
+        .args(sources)
         .stdout(Stdio::piped())
         .spawn()?;
 
@@ -257,6 +233,35 @@ fn parse_build_mode(args: &[String], index: usize) -> BuildMode {
     } else {
         BuildMode::Debug
     }
+}
+
+fn collect_source_files() -> Result<Vec<String>> {
+    let find_src = Command::new("find")
+        .arg("src")
+        .args(vec!["-type", "f"])
+        .args(vec!["-name", "*.c"])
+        .args(vec!["-o", "-name", "*.cpp"])
+        .args(vec!["-o", "-name", "*.s"])
+        .args(vec!["-o", "-name", "*.h"])
+        .args(vec!["-o", "-name", "*.hpp"])
+        .output()?
+        .stdout;
+
+    let mut find_src: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
+
+    let find_include = Command::new("find")
+        .arg("include")
+        .args(vec!["-type", "f"])
+        .args(vec!["-name", "*.h"])
+        .args(vec!["-o", "-name", "*.hpp"])
+        .output()?
+        .stdout;
+
+    let mut found: Vec<_> = std::str::from_utf8(&find_include)?.split('\n').collect();
+    found.append(&mut find_src);
+    found.retain(|str| !str.is_empty());
+
+    Ok(found.iter().map(|s| s.to_string()).collect())
 }
 
 fn main() -> Result<()> {
