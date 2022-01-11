@@ -52,7 +52,7 @@ dependencies.
 - `run [MODE]`, `r`: Builds and executes the project executable.
 - `lines`: Displays the amount of lines of source code for the whole project.
 - `analyze`: Performs static analysis for the C/C++ source files in the project.
-- `format`: Formats the source files in-place using `clang-format`.
+- `format`, `fmt` : Formats the source files in-place using `clang-format`.
 
 The `build`, `rebuild`, and `run` subcommands have an optional argument, which
 represents the mode of the build. The currently supported modes are `debug` and

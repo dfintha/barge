@@ -322,7 +322,7 @@ fn main() -> Result<()> {
         lines()?;
     } else if mode == "analyze" {
         analyze(&project)?;
-    } else if mode == "format" {
+    } else if mode == "format" || mode == "fmt" {
         format(&project)?;
     } else {
         usage();
