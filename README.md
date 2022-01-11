@@ -42,13 +42,13 @@ dependencies.
 
 - `init NAME`: Creates a new project with a simple `"Hello, world!"` program
   in C++, and initializes a `git` repository in a directory with the same name.
-- `build [MODE]`: Builds the project executable in the given build mode. Since
+- `build [MODE]`, `b`: Builds the project executable in the given build mode. Since
   this process uses GNU `make` internally, some messages may be displayed by
   its execution.
 - `clean`: Deletes the build artifacts of the project (the built executable and
   the object files).
 - `rebuild [MODE]`: Equivalent to subsequently invoking `clean` and `build`.
-- `run [MODE]`: Builds and executes the project executable.
+- `run [MODE]`, `r`: Builds and executes the project executable.
 - `lines`: Displays the amount of lines of source code for the whole project.
 - `analyze`: Performs static analysis for the C/C++ source files in the project.
 
