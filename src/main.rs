@@ -200,7 +200,7 @@ fn lines() -> Result<()> {
     let mut wc = String::from(std::str::from_utf8(&wc)?);
     wc.pop();
 
-    color_println!(BLUE, "The project contains {} lines of code.", wc);
+    color_println!(BLUE, "The project contains {} lines of code", wc);
     Ok(())
 }
 
