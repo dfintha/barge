@@ -14,6 +14,10 @@ Source and header files shall have appropriate file extensions based on their
 type: `.c` for C source files, `.cpp` for C++ source files, `.s` for Assembly
 source files, `.h` for C header files, and `.hpp` for C++ header files.
 
+**Please note that the development of this software is in a very early stage.
+As such, changes to the project file format and/or usage can happen
+frequently.**
+
 ## Requirements
 
 Internally, `barge` uses the following external software, which are required
@@ -21,13 +25,14 @@ for proper functionality.
 
 - `coreutils (cat, wc)`: Used internally to count source code lines.
 - `findutils (find)`: Used internally to collect project files.
-- GNU `make`: Used internally to perform various tasks on the project.
+- `make`: Used internally to perform various tasks on the project.
 - `nasm`: Used to compile Assembly source files.
-- `clang`: Used to compile C/C++ source files, and link the executable.
-- `clang-tidy`: Used for static analysis.
+- `clang (clang, clang++, clang-tidy)`: Used to compile C/C++ source files, to
+  link the executable, and to run static analysis on the code.
 - `git`: Used to initialize a `git`˙repository on project creation.
 
-On Arch Linux, the following command installs all the required packages.
+On Arch Linux, the following command installs the packages of all the required
+dependencies.
 
 `pacman -S coreutils findutils make nasm clang git`
 
@@ -61,24 +66,24 @@ The user can specify the settings to their project by changing `barge.json` at
 the project root. This file contains a single configuration object with the
 following fields.
 
-- name (string):
+- **name (string)**:
   The name of the project, and as such, the executable.
-- c_standard (string):
+- **c_standard (string)**:
   The C standard used for the C source files, in a format like "c99".
-- cpp_standard (string):
+- **cpp_standard (string)**:
   The C++ standard used for the C source files, in a format like "c++14".
-- external_libraries (list of objects, optional):
+- **external_libraries (list of objects, optional)**:
   The list of external libraries to link with. This is a list of objects, which
   are represented in one of the following ways.
   - Using pkg-build: { type: "pkgbuild", name: "LIBRARY_NAME" }
   - Manually specifying flags: { type: "manual", "cflags": "LIBRARY_CFLAGS", ldflags: "LIBRARY_LDFLAGS"}
-- custom_cflags (string, optional):
+- **custom_cflags (string, optional)**:
   Adds the flags specified here to the C source file compilation command line.
-- custom_cxxflags (string, optional):
+- **custom_cxxflags (string, optional)**:
   Adds the flags specified here to the C++ source file compilation command line.
-- custom_ldflags (string, optional):
+- **custom_ldflags (string, optional)**:
   Adds the flags specified here to the executable linking command line.
-- custom_makeopts (string, optional):
+- **custom_makeopts (string, optional)**:
   Adds the flags specified here to the GNU make command line. If none given, the default makeopts
   will only specify the amount of parallel jobs. This is the minimum of the logical cores and the
   amount of free memory divided by 2 GiB.
