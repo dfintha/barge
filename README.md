@@ -68,6 +68,8 @@ following fields.
 
 - **name (string)**:
   The name of the project, and as such, the executable.
+- **version (string)**:
+  The version of the project.
 - **c_standard (string)**:
   The C standard used for the C source files, in a format like "c99".
 - **cpp_standard (string)**:
@@ -93,6 +95,7 @@ following fields.
 ```json
 {
     "name": "example",
+    "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14",
     "external_libraries": [
@@ -118,6 +121,7 @@ following fields.
 ```json
 {
     "name": "example",
+    "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14"
 }
