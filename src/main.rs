@@ -70,6 +70,7 @@ The available subcommands are:
     run, r [MODE]       Runs the binary of the current project
     rebuild [MODE]      Removed build artifacts, and builds the project
     analyze             Perform static analysis on the project
+    format              Automatically format the source code of the project
 
 The MODE argument can be either 'debug' or 'release'. If non given, the default
 is 'debug'."
