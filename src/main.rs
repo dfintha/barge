@@ -2,6 +2,7 @@ use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildM
 use crate::project::{Project, ProjectType};
 use crate::result::{BargeError, Result};
 use ansi_term::{Color, Style};
+use clap::App;
 use lazy_static::lazy_static;
 use std::fs::File;
 use std::io::Write;
@@ -55,27 +56,6 @@ int main() {
 }
 "
     };
-}
-
-fn usage() {
-    println!(
-        "A very basic build tool for very basic assembly/C/C++ projects.
-
-USAGE:
-    barge [SUBCOMMAND] [OPTIONS]
-
-The available subcommands are:
-    build, b [MODE]     Builds the current project in the given build mode
-    clean               Remove the build artifacts
-    init [NAME]         Create a new project named NAME in a new directory
-    run, r [MODE]       Runs the binary of the current project
-    rebuild [MODE]      Removed build artifacts, and builds the project
-    analyze             Perform static analysis on the project
-    format              Automatically format the source code of the project
-
-The MODE argument can be either 'debug' or 'release'. If non given, the default
-is 'debug'."
-    );
 }
 
 fn init(name: &str) -> Result<()> {
@@ -253,13 +233,17 @@ fn generate_default_makeopts() -> Result<Vec<String>> {
     Ok(vec![format!("-j{}", parallel_jobs)])
 }
 
-fn parse_build_mode(args: &[String], index: usize) -> BuildMode {
-    if args.len() < (index + 1) || &args[index] == "debug" {
-        BuildMode::Debug
-    } else if &args[index] == "release" {
-        BuildMode::Release
+fn parse_build_mode(mode: Option<&str>) -> Result<BuildMode> {
+    if let Some(mode) = mode {
+        if mode == "debug" {
+            Ok(BuildMode::Debug)
+        } else if mode == "release" {
+            Ok(BuildMode::Release)
+        } else {
+            Err(BargeError::InvalidValue("invalid build mode specified"))
+        }
     } else {
-        BuildMode::Debug
+        Ok(BuildMode::Debug)
     }
 }
 
@@ -293,48 +277,73 @@ fn collect_source_files() -> Result<Vec<String>> {
 }
 
 fn parse_and_run_subcommands() -> Result<()> {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        usage();
-        return Ok(());
-    }
+    let matches = App::new(env!("CARGO_PKG_NAME"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .about("A simple tool for small assembly/C/C++ projects")
+        .setting(clap::AppSettings::SubcommandRequired)
+        .subcommand(
+            App::new("init")
+                .about("Initializes a new project")
+                .arg(clap::arg!(<NAME> "The name of the project")),
+        )
+        .subcommand(
+            App::new("build")
+                .alias("b")
+                .about("Builds the current project")
+                .arg(clap::arg!([MODE] "Build mode (debug or release)")),
+        )
+        .subcommand(
+            App::new("rebuild")
+                .about("Removes build artifacts and builds the current project")
+                .arg(clap::arg!([MODE] "Build mode (debug or release)")),
+        )
+        .subcommand(
+            App::new("run")
+                .alias("r")
+                .about("Builds and runs the current project (binary projects only)")
+                .arg(clap::arg!([MODE] "Build mode (debug or release)")),
+        )
+        .subcommand(App::new("clean").about("Removes build artifacts"))
+        .subcommand(App::new("lines").about("Counts the source code lines in the project"))
+        .subcommand(App::new("analyze").about("Runs static analysis on the project"))
+        .subcommand(App::new("format").about("Formats the source code of the project"))
+        .try_get_matches()?;
 
-    let mode = &args[1];
-    if mode == "init" {
-        if args.len() < 3 {
-            usage();
-            return Ok(());
-        }
-        init(&args[2])?;
-        return Ok(());
+    if let Some(init_args) = matches.subcommand_matches("init") {
+        let name = init_args
+            .value_of("NAME")
+            .ok_or_else(|| BargeError::NoneOption("Couldn't parse project name".to_string()))?;
+        return init(name);
     }
 
     if !in_project_folder() {
-        color_eprintln!("This command must be run in a project folder, which contains barge.json");
-        return Ok(());
+        color_eprintln!(
+            "This subcommand must be run in a project folder, which contains barge.json"
+        );
+        std::process::exit(1);
     }
 
     let project = Project::load("barge.json")?;
-    if mode == "build" || mode == "b" {
-        let build_mode = parse_build_mode(&args, 2);
-        build(&project, build_mode)?;
-    } else if mode == "rebuild" {
-        let build_mode = parse_build_mode(&args, 2);
+
+    if let Some(build_args) = matches.subcommand_matches("build") {
+        let mode = parse_build_mode(build_args.value_of("MODE"))?;
+        build(&project, mode)?;
+    } else if let Some(rebuild_args) = matches.subcommand_matches("rebuild") {
+        let mode = parse_build_mode(rebuild_args.value_of("MODE"))?;
         clean()?;
-        build(&project, build_mode)?;
-    } else if mode == "run" || mode == "r" {
-        let build_mode = parse_build_mode(&args, 2);
-        run(&project, build_mode)?;
-    } else if mode == "clean" {
+        build(&project, mode)?;
+    } else if let Some(run_args) = matches.subcommand_matches("run") {
+        let mode = parse_build_mode(run_args.value_of("MODE"))?;
+        run(&project, mode)?;
+    } else if let Some(_) = matches.subcommand_matches("clean") {
         clean()?;
-    } else if mode == "lines" {
+    } else if let Some(_) = matches.subcommand_matches("lines") {
         lines()?;
-    } else if mode == "analyze" {
+    } else if let Some(_) = matches.subcommand_matches("analyze") {
         analyze(&project)?;
-    } else if mode == "format" || mode == "fmt" {
+    } else if let Some(_) = matches.subcommand_matches("format") {
         format(&project)?;
-    } else {
-        usage();
     }
 
     Ok(())
@@ -344,10 +353,12 @@ fn main() -> Result<()> {
     let result = parse_and_run_subcommands();
     if let Err(error) = &result {
         match error {
-            BargeError::StdIoError(e) => color_eprintln!("I/O error: {}", e.to_string()),
-            BargeError::StdStrUtf8Error(e) => color_eprintln!("UTF-8 error: {}", e.to_string()),
-            BargeError::SerdeJsonError(e) => color_eprintln!("JSON error: {}", e.to_string()),
-            BargeError::NoneOption(s) => color_eprintln!("Missing value error: {}", s),
+            BargeError::StdIoError(e) => color_eprintln!("error: {}", e.to_string()),
+            BargeError::StdStrUtf8Error(e) => color_eprintln!("error: {}", e.to_string()),
+            BargeError::SerdeJsonError(e) => color_eprintln!("error: {}", e.to_string()),
+            BargeError::ClapError(e) => color_eprintln!("{}", e.to_string()),
+            BargeError::NoneOption(s) => color_eprintln!("error: {}", s),
+            BargeError::InvalidValue(s) => color_eprintln!("error: {}", s),
         };
         std::process::exit(1);
     }

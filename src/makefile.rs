@@ -1,8 +1,9 @@
 use crate::project::{Library, Project, ProjectType};
 use crate::result::{BargeError, Result};
+use serde::Deserialize;
 use std::process::Command;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
 pub(crate) enum BuildMode {
     Debug,
     Release,

@@ -5,7 +5,9 @@ pub(crate) enum BargeError {
     StdIoError(std::io::Error),
     StdStrUtf8Error(std::str::Utf8Error),
     SerdeJsonError(serde_json::Error),
+    ClapError(clap::Error),
     NoneOption(String),
+    InvalidValue(&'static str),
 }
 
 impl From<std::io::Error> for BargeError {
@@ -23,6 +25,12 @@ impl From<std::str::Utf8Error> for BargeError {
 impl From<serde_json::Error> for BargeError {
     fn from(error: serde_json::Error) -> BargeError {
         BargeError::SerdeJsonError(error)
+    }
+}
+
+impl From<clap::Error> for BargeError {
+    fn from(error: clap::Error) -> BargeError {
+        BargeError::ClapError(error)
     }
 }
 
