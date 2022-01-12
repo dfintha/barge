@@ -110,7 +110,7 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
     let makefile = generate_build_makefile(&project, build_mode)?;
     make.stdin
         .as_mut()
-        .ok_or_else(|| BargeError::NoneOption("Could not interact with make".to_string()))?
+        .ok_or_else(|| BargeError::NoneOption("Could not interact with make"))?
         .write_all(makefile.as_bytes())?;
     make.wait()?;
 
@@ -138,7 +138,7 @@ fn analyze(project: &Project) -> Result<()> {
 
     make.stdin
         .as_mut()
-        .ok_or_else(|| BargeError::NoneOption("Could not interact with make".to_string()))?
+        .ok_or_else(|| BargeError::NoneOption("Could not interact with make"))?
         .write_all(makefile.as_bytes())?;
     make.wait()?;
 
@@ -182,7 +182,7 @@ fn lines() -> Result<()> {
     let wc = Command::new("wc")
         .arg("-l")
         .stdin(Stdio::from(cat.stdout.ok_or_else(|| {
-            BargeError::NoneOption("Could not get file list".to_string())
+            BargeError::NoneOption("Could not get file list")
         })?))
         .output()?
         .stdout;
@@ -313,7 +313,7 @@ fn parse_and_run_subcommands() -> Result<()> {
     if let Some(init_args) = matches.subcommand_matches("init") {
         let name = init_args
             .value_of("NAME")
-            .ok_or_else(|| BargeError::NoneOption("Couldn't parse project name".to_string()))?;
+            .ok_or_else(|| BargeError::NoneOption("Couldn't parse project name"))?;
         return init(name);
     }
 

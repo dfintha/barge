@@ -6,7 +6,7 @@ pub(crate) enum BargeError {
     StdStrUtf8Error(std::str::Utf8Error),
     SerdeJsonError(serde_json::Error),
     ClapError(clap::Error),
-    NoneOption(String),
+    NoneOption(&'static str),
     InvalidValue(&'static str),
 }
 
