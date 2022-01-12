@@ -1,4 +1,4 @@
-use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildMode};
+use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildTarget};
 use crate::project::{Project, ProjectType};
 use crate::result::{BargeError, Result};
 use ansi_term::{Color, Style};
@@ -84,13 +84,13 @@ fn init(name: &str) -> Result<()> {
     Ok(())
 }
 
-fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
-    let mode_string = match build_mode {
-        BuildMode::Debug => "debug",
-        BuildMode::Release => "release",
+fn build(project: &Project, target: BuildTarget) -> Result<()> {
+    let target_string = match target {
+        BuildTarget::Debug => "debug",
+        BuildTarget::Release => "release",
     };
 
-    color_println!(BLUE, "Building project in {} mode", mode_string);
+    color_println!(BLUE, "Building project with {} configuration", target_string);
     let start_time = Instant::now();
 
     let makeopts = if let Some(makeopts) = &project.custom_makeopts {
@@ -107,7 +107,7 @@ fn build(project: &Project, build_mode: BuildMode) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = generate_build_makefile(&project, build_mode)?;
+    let makefile = generate_build_makefile(&project, target)?;
     make.stdin
         .as_mut()
         .ok_or_else(|| BargeError::NoneOption("Could not interact with make"))?
@@ -145,20 +145,20 @@ fn analyze(project: &Project) -> Result<()> {
     Ok(())
 }
 
-fn run(project: &Project, build_mode: BuildMode) -> Result<()> {
+fn run(project: &Project, target: BuildTarget) -> Result<()> {
     if project.project_type != ProjectType::Binary {
         color_eprintln!("Only binary projects can be run");
         return Ok(());
     }
 
-    build(project, build_mode)?;
+    build(project, target)?;
 
-    let mode_string = match build_mode {
-        BuildMode::Debug => "debug",
-        BuildMode::Release => "release",
+    let target_string = match target {
+        BuildTarget::Debug => "debug",
+        BuildTarget::Release => "release",
     };
 
-    let path = String::from("bin/") + mode_string + "/" + &project.name;
+    let path = String::from("bin/") + target_string + "/" + &project.name;
     color_println!(BLUE, "Running executable {}", &path);
     Command::new(&path).spawn()?.wait()?;
     Ok(())
@@ -233,17 +233,17 @@ fn generate_default_makeopts() -> Result<Vec<String>> {
     Ok(vec![format!("-j{}", parallel_jobs)])
 }
 
-fn parse_build_mode(mode: Option<&str>) -> Result<BuildMode> {
-    if let Some(mode) = mode {
-        if mode == "debug" {
-            Ok(BuildMode::Debug)
-        } else if mode == "release" {
-            Ok(BuildMode::Release)
+fn parse_build_target(target: Option<&str>) -> Result<BuildTarget> {
+    if let Some(target) = target {
+        if target == "debug" {
+            Ok(BuildTarget::Debug)
+        } else if target == "release" {
+            Ok(BuildTarget::Release)
         } else {
-            Err(BargeError::InvalidValue("invalid build mode specified"))
+            Err(BargeError::InvalidValue("Invalid target specified"))
         }
     } else {
-        Ok(BuildMode::Debug)
+        Ok(BuildTarget::Debug)
     }
 }
 
@@ -291,18 +291,18 @@ fn parse_and_run_subcommands() -> Result<()> {
             App::new("build")
                 .alias("b")
                 .about("Builds the current project")
-                .arg(clap::arg!([MODE] "Build mode (debug or release)")),
+                .arg(clap::arg!([TARGET] "Build target (debug or release)")),
         )
         .subcommand(
             App::new("rebuild")
                 .about("Removes build artifacts and builds the current project")
-                .arg(clap::arg!([MODE] "Build mode (debug or release)")),
+                .arg(clap::arg!([TARGET] "Build target (debug or release)")),
         )
         .subcommand(
             App::new("run")
                 .alias("r")
                 .about("Builds and runs the current project (binary projects only)")
-                .arg(clap::arg!([MODE] "Build mode (debug or release)")),
+                .arg(clap::arg!([TARGET] "Build target (debug or release)")),
         )
         .subcommand(App::new("clean").about("Removes build artifacts"))
         .subcommand(App::new("lines").about("Counts the source code lines in the project"))
@@ -327,15 +327,15 @@ fn parse_and_run_subcommands() -> Result<()> {
     let project = Project::load("barge.json")?;
 
     if let Some(build_args) = matches.subcommand_matches("build") {
-        let mode = parse_build_mode(build_args.value_of("MODE"))?;
-        build(&project, mode)?;
+        let target = parse_build_target(build_args.value_of("TARGET"))?;
+        build(&project, target)?;
     } else if let Some(rebuild_args) = matches.subcommand_matches("rebuild") {
-        let mode = parse_build_mode(rebuild_args.value_of("MODE"))?;
+        let target = parse_build_target(rebuild_args.value_of("TARGET"))?;
         clean()?;
-        build(&project, mode)?;
+        build(&project, target)?;
     } else if let Some(run_args) = matches.subcommand_matches("run") {
-        let mode = parse_build_mode(run_args.value_of("MODE"))?;
-        run(&project, mode)?;
+        let target = parse_build_target(run_args.value_of("TARGET"))?;
+        run(&project, target)?;
     } else if let Some(_) = matches.subcommand_matches("clean") {
         clean()?;
     } else if let Some(_) = matches.subcommand_matches("lines") {

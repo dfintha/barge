@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::process::Command;
 
 #[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
-pub(crate) enum BuildMode {
+pub(crate) enum BuildTarget {
     Debug,
     Release,
 }
@@ -84,16 +84,16 @@ analyze: $(CSRC) $(CXXSRC)
     };
 }
 
-pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) -> Result<String> {
+pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) -> Result<String> {
     let common_cflags = "-Wall -Wextra -pedantic \
                          -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion \
                          -Iinclude -Isrc";
 
     let (library_cflags, library_ldflags) = build_library_flags(&project.external_libraries)?;
 
-    let (mode_string, mode_cflags, mode_ldflags) = match build_mode {
-        BuildMode::Debug => ("debug", "-Og", "-ggdb"),
-        BuildMode::Release => ("release", "-DNDEBUG -O2 -ffast-math", "-s"),
+    let (target_string, target_cflags, target_ldflags) = match target {
+        BuildTarget::Debug => ("debug", "-Og", "-ggdb"),
+        BuildTarget::Release => ("release", "-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
     let custom_cflags = if project.custom_cflags.is_some() {
@@ -133,7 +133,7 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
         + " "
         + &library_cflags
         + " "
-        + mode_cflags
+        + target_cflags
         + " "
         + &custom_cflags
         + pic_flag;
@@ -145,12 +145,12 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
         + " "
         + &library_cflags
         + " "
-        + mode_cflags
+        + target_cflags
         + " "
         + &custom_cxxflags
         + pic_flag;
 
-    let ldflags = library_ldflags + " " + &custom_ldflags + " " + mode_ldflags;
+    let ldflags = library_ldflags + " " + &custom_ldflags + " " + target_ldflags;
 
     let name = match project.project_type {
         ProjectType::Binary => project.name.clone(),
@@ -166,18 +166,18 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
 
     let result = format!(
         build_makefile_template!(),
-        mode_string,
+        target_string,
         cflags,
-        mode_string,
+        target_string,
         cxxflags,
-        mode_string,
+        target_string,
         ldflags,
         name,
-        mode_string,
+        target_string,
         link_command,
-        mode_string,
-        mode_string,
-        mode_string
+        target_string,
+        target_string,
+        target_string
     );
 
     Ok(result)

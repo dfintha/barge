@@ -44,24 +44,26 @@ dependencies.
 
 - `init <NAME>`: Creates a new project with a simple `"Hello, world!"` program
   in C++, and initializes a `git` repository in a directory with the same name.
-- `build [MODE]`, `b`: Builds the project executable in the given build mode. Since
-  this process uses GNU `make` internally, some messages may be displayed by
-  its execution.
+- `build [TARGET]`, `b`: Builds the project executable for the given build
+  target.
+  Since this process uses GNU `make` internally, some messages may be displayed
+  by its execution.
 - `clean`: Deletes the build artifacts of the project (the built executable and
   the object files).
-- `rebuild [MODE]`: Equivalent to subsequently invoking `clean` and `build`.
-- `run [MODE]`, `r`: Builds and executes the project executable.
+- `rebuild [TARGET]`: Equivalent to subsequently invoking `clean` and `build`.
+- `run [TARGET]`, `r`: Builds and executes the project executable.
 - `lines`: Displays the amount of lines of source code for the whole project.
 - `analyze`: Performs static analysis for the C/C++ source files in the project.
 - `format`, `fmt` : Formats the source files in-place using `clang-format`.
 
 The `build`, `rebuild`, and `run` subcommands have an optional argument, which
-represents the mode of the build. The currently supported modes are `debug` and
-`release`. If none is specified, `debug` is the default.
+represents the configuration (target) of the build. The currently supported
+targets are `debug` and `release`. If none is specified, `debug` is selected by
+default.
 
-In `debug` build mode, the executable contains its debug symbols, and is
-optimized for debugging, while in `release` mode, the symbols are stripped, and
-the executable is optimized for fast execution.
+In `debug` configuration, the resulting file contains its debug symbols, and is
+optimized for debugging, while in `release` configuration, the symbols are
+stripped, and the file is optimized for fast execution.
 
 ## The project file
 
