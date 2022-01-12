@@ -42,7 +42,7 @@ dependencies.
 
 `barge` supports the following subcommands.
 
-- `init NAME`: Creates a new project with a simple `"Hello, world!"` program
+- `init <NAME>`: Creates a new project with a simple `"Hello, world!"` program
   in C++, and initializes a `git` repository in a directory with the same name.
 - `build [MODE]`, `b`: Builds the project executable in the given build mode. Since
   this process uses GNU `make` internally, some messages may be displayed by
