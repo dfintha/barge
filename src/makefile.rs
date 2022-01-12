@@ -96,28 +96,25 @@ pub(crate) fn generate_build_makefile(project: &Project, build_mode: BuildMode) 
     };
 
     let custom_cflags = if project.custom_cflags.is_some() {
-        project.custom_cflags.clone().ok_or(BargeError::NoneOption(
-            "Nonexistent optional value reported as existent".to_string(),
-        ))?
+        project.custom_cflags.clone().ok_or_else(|| {
+            BargeError::NoneOption("Nonexistent optional value reported as existent".to_string())
+        })?
     } else {
         String::new()
     };
 
     let custom_cxxflags = if project.custom_cxxflags.is_some() {
-        project.custom_cflags.clone().ok_or(BargeError::NoneOption(
-            "Nonexistent optional value reported as existent".to_string(),
-        ))?
+        project.custom_cflags.clone().ok_or_else(|| {
+            BargeError::NoneOption("Nonexistent optional value reported as existent".to_string())
+        })?
     } else {
         String::new()
     };
 
     let custom_ldflags = if project.custom_ldflags.is_some() {
-        project
-            .custom_ldflags
-            .clone()
-            .ok_or(BargeError::NoneOption(
-                "Nonexistent optional value reported as existent".to_string(),
-            ))?
+        project.custom_ldflags.clone().ok_or_else(|| {
+            BargeError::NoneOption("Nonexistent optional value reported as existent".to_string())
+        })?
     } else {
         String::new()
     };
