@@ -6,9 +6,10 @@
 which contain Assembly, C, and C++ source files, with its main goal being
 simplicity.
 
-Each project translates to a single executable. Projects have and `src` and an
-`include` directory at their root. which contain the source and header files
-respectively. Subdirectories within these directories are supported.
+Each project translates to a single library (static or shared) or executable.
+Projects have and `src` and an `include` directory at their root. which contain
+the source and header files respectively. Subdirectories within these
+directories are supported.
 
 Source and header files shall have appropriate file extensions based on their
 type: `.c` for C source files, `.cpp` for C++ source files, `.s` for Assembly
