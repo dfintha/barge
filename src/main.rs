@@ -124,6 +124,18 @@ fn build(project: &Project, target: BuildTarget) -> Result<()> {
     Ok(())
 }
 
+fn rebuild(project: &Project, target: BuildTarget) -> Result<()> {
+    let target_path = match target {
+        BuildTarget::Debug => "debug",
+        BuildTarget::Release => "release",
+    };
+
+    color_println!(BLUE, "{}", "Removing relevant build artifacts");
+    std::fs::remove_dir_all(format!("./bin/{}", target_path))?;
+    std::fs::remove_dir_all(format!("./obj/{}", target_path))?;
+    build(&project, target)
+}
+
 fn analyze(project: &Project) -> Result<()> {
     color_println!(BLUE, "Running static analysis on project");
 
@@ -331,8 +343,7 @@ fn parse_and_run_subcommands() -> Result<()> {
         build(&project, target)?;
     } else if let Some(rebuild_args) = matches.subcommand_matches("rebuild") {
         let target = parse_build_target(rebuild_args.value_of("TARGET"))?;
-        clean()?;
-        build(&project, target)?;
+        rebuild(&project, target)?;
     } else if let Some(run_args) = matches.subcommand_matches("run") {
         let target = parse_build_target(run_args.value_of("TARGET"))?;
         run(&project, target)?;
