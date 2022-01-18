@@ -92,7 +92,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let (library_cflags, library_ldflags) = build_library_flags(&project.external_libraries)?;
 
     let (target_string, target_cflags, target_ldflags) = match target {
-        BuildTarget::Debug => ("debug", "-Og", "-ggdb"),
+        BuildTarget::Debug => ("debug", "-Og -g", "-ggdb"),
         BuildTarget::Release => ("release", "-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
