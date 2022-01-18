@@ -85,12 +85,11 @@ fn init(name: &str) -> Result<()> {
 }
 
 fn build(project: &Project, target: BuildTarget) -> Result<()> {
-    let target_string = match target {
-        BuildTarget::Debug => "debug",
-        BuildTarget::Release => "release",
-    };
-
-    color_println!(BLUE, "Building project with {} configuration", target_string);
+    color_println!(
+        BLUE,
+        "Building project with {} configuration",
+        target.to_string()
+    );
     let start_time = Instant::now();
 
     let makeopts = if let Some(makeopts) = &project.custom_makeopts {
@@ -125,14 +124,9 @@ fn build(project: &Project, target: BuildTarget) -> Result<()> {
 }
 
 fn rebuild(project: &Project, target: BuildTarget) -> Result<()> {
-    let target_path = match target {
-        BuildTarget::Debug => "debug",
-        BuildTarget::Release => "release",
-    };
-
     color_println!(BLUE, "{}", "Removing relevant build artifacts");
-    std::fs::remove_dir_all(format!("./bin/{}", target_path))?;
-    std::fs::remove_dir_all(format!("./obj/{}", target_path))?;
+    std::fs::remove_dir_all(format!("./bin/{}", target.to_string()))?;
+    std::fs::remove_dir_all(format!("./obj/{}", target.to_string()))?;
     build(&project, target)
 }
 
@@ -165,12 +159,7 @@ fn run(project: &Project, target: BuildTarget) -> Result<()> {
 
     build(project, target)?;
 
-    let target_string = match target {
-        BuildTarget::Debug => "debug",
-        BuildTarget::Release => "release",
-    };
-
-    let path = String::from("bin/") + target_string + "/" + &project.name;
+    let path = String::from("bin/") + &target.to_string() + "/" + &project.name;
     color_println!(BLUE, "Running executable {}", &path);
     Command::new(&path).spawn()?.wait()?;
     Ok(())

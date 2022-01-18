@@ -2,11 +2,21 @@ use crate::project::{Library, Project, ProjectType};
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
 use std::process::Command;
+use std::string::ToString;
 
 #[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
 pub(crate) enum BuildTarget {
     Debug,
     Release,
+}
+
+impl ToString for BuildTarget {
+    fn to_string(&self) -> String {
+        match self {
+            BuildTarget::Debug => String::from("debug"),
+            BuildTarget::Release => String::from("release"),
+        }
+    }
 }
 
 macro_rules! build_makefile_template {
@@ -91,9 +101,9 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 
     let (library_cflags, library_ldflags) = build_library_flags(&project.external_libraries)?;
 
-    let (target_string, target_cflags, target_ldflags) = match target {
-        BuildTarget::Debug => ("debug", "-Og -g", "-ggdb"),
-        BuildTarget::Release => ("release", "-DNDEBUG -O2 -ffast-math", "-s"),
+    let (target_cflags, target_ldflags) = match target {
+        BuildTarget::Debug => ("-Og -g", "-ggdb"),
+        BuildTarget::Release => ("-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
     let custom_cflags = if project.custom_cflags.is_some() {
@@ -166,18 +176,18 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 
     let result = format!(
         build_makefile_template!(),
-        target_string,
+        target.to_string(),
         cflags,
-        target_string,
+        target.to_string(),
         cxxflags,
-        target_string,
+        target.to_string(),
         ldflags,
         name,
-        target_string,
+        target.to_string(),
         link_command,
-        target_string,
-        target_string,
-        target_string
+        target.to_string(),
+        target.to_string(),
+        target.to_string()
     );
 
     Ok(result)
