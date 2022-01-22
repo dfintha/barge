@@ -74,7 +74,7 @@ following fields.
 - **name (string)**:
   The name of the project.
 - **project_type (string)**:
-  The type of the project. Can be either `binary`, `shared_library`, or `static_library`.
+  The type of the project. Can be either `executable`, `shared_library`, or `static_library`.
 - **version (string)**:
   The version of the project.
 - **c_standard (string)**:
@@ -107,7 +107,7 @@ following fields.
 ```json
 {
     "name": "example",
-    "project_type": "binary",
+    "project_type": "executable",
     "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14",
@@ -135,7 +135,7 @@ following fields.
 ```json
 {
     "name": "example",
-    "project_type": "binary",
+    "project_type": "executable",
     "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14"

@@ -130,7 +130,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         String::new()
     };
 
-    let pic_flag = if project.project_type != ProjectType::Binary {
+    let pic_flag = if project.project_type != ProjectType::Executable {
         "-fPIC"
     } else {
         ""
@@ -163,13 +163,13 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let ldflags = library_ldflags + " " + &custom_ldflags + " " + target_ldflags;
 
     let name = match project.project_type {
-        ProjectType::Binary => project.name.clone(),
+        ProjectType::Executable => project.name.clone(),
         ProjectType::SharedLibrary => "lib".to_string() + &project.name + ".so",
         ProjectType::StaticLibrary => "lib".to_string() + &project.name + ".a",
     };
 
     let link_command = match project.project_type {
-        ProjectType::Binary => "@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)",
+        ProjectType::Executable => "@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)",
         ProjectType::SharedLibrary => "@$(CXX) -shared $(OBJECTS) -o $@ $(LDFLAGS)",
         ProjectType::StaticLibrary => "@ar rcs $@ $(OBJECTS)",
     };

@@ -37,7 +37,7 @@ macro_rules! barge_template {
     () => {
         "{{
     \"name\": \"{}\",
-    \"project_type\": \"binary\",
+    \"project_type\": \"executable\",
     \"version\": \"0.1.0\",
     \"c_standard\": \"c99\",
     \"cpp_standard\": \"c++14\"
@@ -152,7 +152,7 @@ fn analyze(project: &Project) -> Result<()> {
 }
 
 fn run(project: &Project, target: BuildTarget) -> Result<()> {
-    if project.project_type != ProjectType::Binary {
+    if project.project_type != ProjectType::Executable {
         color_eprintln!("Only binary projects can be run");
         return Ok(());
     }
