@@ -106,10 +106,10 @@ fn build(project: &Project, target: BuildTarget) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = generate_build_makefile(&project, target)?;
+    let makefile = generate_build_makefile(project, target)?;
     make.stdin
         .as_mut()
-        .ok_or_else(|| BargeError::NoneOption("Could not interact with make"))?
+        .ok_or(BargeError::NoneOption("Could not interact with make"))?
         .write_all(makefile.as_bytes())?;
     make.wait()?;
 
@@ -127,7 +127,7 @@ fn rebuild(project: &Project, target: BuildTarget) -> Result<()> {
     color_println!(BLUE, "{}", "Removing relevant build artifacts");
     std::fs::remove_dir_all(format!("./bin/{}", target.to_string()))?;
     std::fs::remove_dir_all(format!("./obj/{}", target.to_string()))?;
-    build(&project, target)
+    build(project, target)
 }
 
 fn analyze(project: &Project) -> Result<()> {
@@ -140,11 +140,11 @@ fn analyze(project: &Project) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()?;
 
-    let makefile = generate_analyze_makefile(&project)?;
+    let makefile = generate_analyze_makefile(project)?;
 
     make.stdin
         .as_mut()
-        .ok_or_else(|| BargeError::NoneOption("Could not interact with make"))?
+        .ok_or(BargeError::NoneOption("Could not interact with make"))?
         .write_all(makefile.as_bytes())?;
     make.wait()?;
 
@@ -182,9 +182,10 @@ fn lines() -> Result<()> {
 
     let wc = Command::new("wc")
         .arg("-l")
-        .stdin(Stdio::from(cat.stdout.ok_or_else(|| {
-            BargeError::NoneOption("Could not get file list")
-        })?))
+        .stdin(Stdio::from(
+            cat.stdout
+                .ok_or(BargeError::NoneOption("Could not get file list"))?,
+        ))
         .output()?
         .stdout;
     let mut wc = String::from(std::str::from_utf8(&wc)?);
@@ -197,7 +198,7 @@ fn lines() -> Result<()> {
 fn format(project: &Project) -> Result<()> {
     let sources = collect_source_files()?;
     let style_arg = if let Some(format_style) = &project.format_style {
-        "--style=".to_string() + &format_style
+        "--style=".to_string() + format_style
     } else {
         "--style=Google".to_string()
     };
@@ -314,7 +315,7 @@ fn parse_and_run_subcommands() -> Result<()> {
     if let Some(init_args) = matches.subcommand_matches("init") {
         let name = init_args
             .value_of("NAME")
-            .ok_or_else(|| BargeError::NoneOption("Couldn't parse project name"))?;
+            .ok_or(BargeError::NoneOption("Couldn't parse project name"))?;
         return init(name);
     }
 
@@ -336,13 +337,13 @@ fn parse_and_run_subcommands() -> Result<()> {
     } else if let Some(run_args) = matches.subcommand_matches("run") {
         let target = parse_build_target(run_args.value_of("TARGET"))?;
         run(&project, target)?;
-    } else if let Some(_) = matches.subcommand_matches("clean") {
+    } else if matches.subcommand_matches("clean").is_some() {
         clean()?;
-    } else if let Some(_) = matches.subcommand_matches("lines") {
+    } else if matches.subcommand_matches("lines").is_some() {
         lines()?;
-    } else if let Some(_) = matches.subcommand_matches("analyze") {
+    } else if matches.subcommand_matches("analyze").is_some() {
         analyze(&project)?;
-    } else if let Some(_) = matches.subcommand_matches("format") {
+    } else if matches.subcommand_matches("format").is_some() {
         format(&project)?;
     }
 

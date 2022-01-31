@@ -107,25 +107,28 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     };
 
     let custom_cflags = if project.custom_cflags.is_some() {
-        project.custom_cflags.clone().ok_or_else(|| {
-            BargeError::NoneOption("Nonexistent optional value reported as existent")
-        })?
+        project.custom_cflags.clone().ok_or(BargeError::NoneOption(
+            "Nonexistent optional value reported as existent",
+        ))?
     } else {
         String::new()
     };
 
     let custom_cxxflags = if project.custom_cxxflags.is_some() {
-        project.custom_cflags.clone().ok_or_else(|| {
-            BargeError::NoneOption("Nonexistent optional value reported as existent")
-        })?
+        project.custom_cflags.clone().ok_or(BargeError::NoneOption(
+            "Nonexistent optional value reported as existent",
+        ))?
     } else {
         String::new()
     };
 
     let custom_ldflags = if project.custom_ldflags.is_some() {
-        project.custom_ldflags.clone().ok_or_else(|| {
-            BargeError::NoneOption("Nonexistent optional value reported as existent")
-        })?
+        project
+            .custom_ldflags
+            .clone()
+            .ok_or(BargeError::NoneOption(
+                "Nonexistent optional value reported as existent",
+            ))?
     } else {
         String::new()
     };
@@ -219,8 +222,8 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> Result<(String, Stri
         for library in libraries {
             match library {
                 Library::PkgConfig { name } => {
-                    library_cflags.push_str(&call_pkg_config(&name, "--cflags")?);
-                    library_ldflags.push_str(&call_pkg_config(&name, "--libs")?);
+                    library_cflags.push_str(&call_pkg_config(name, "--cflags")?);
+                    library_ldflags.push_str(&call_pkg_config(name, "--libs")?);
                 }
                 Library::Manual { cflags, ldflags } => {
                     library_cflags.push_str(cflags);
