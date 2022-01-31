@@ -99,6 +99,7 @@ fn build(project: &Project, target: BuildTarget) -> Result<()> {
     };
 
     let mut make = Command::new("make")
+        .arg("-s")
         .arg("-f")
         .arg("-")
         .arg("all")
@@ -134,6 +135,7 @@ fn analyze(project: &Project) -> Result<()> {
     color_println!(BLUE, "Running static analysis on project");
 
     let mut make = Command::new("make")
+        .arg("-s")
         .arg("-f")
         .arg("-")
         .arg("analyze")
