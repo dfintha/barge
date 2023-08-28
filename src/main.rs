@@ -33,19 +33,6 @@ macro_rules! color_eprintln {
     }
 }
 
-macro_rules! barge_template {
-    () => {
-        "{{
-    \"name\": \"{}\",
-    \"project_type\": \"executable\",
-    \"version\": \"0.1.0\",
-    \"c_standard\": \"c99\",
-    \"cpp_standard\": \"c++14\"
-}}
-"
-    };
-}
-
 macro_rules! hello_template {
     () => {
         "#include <iostream>
@@ -66,8 +53,11 @@ fn init(name: &str) -> Result<()> {
     std::fs::create_dir(path.clone() + "/include")?;
 
     {
+        let project = Project::new(name)?;
         let mut file = File::create(path.clone() + "/barge.json")?;
-        file.write_all(format!(barge_template!(), name).as_bytes())?;
+        let json = serde_json::to_string_pretty(&project)?;
+        file.write_all(json.as_bytes())?;
+        file.write_all(b"\n")?;
     }
     {
         let mut file = File::create(path.clone() + "/src/main.cpp")?;
