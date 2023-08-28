@@ -1,6 +1,7 @@
 use crate::project::{Library, Project, ProjectType};
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
+use std::convert::TryFrom;
 use std::process::Command;
 use std::string::ToString;
 
@@ -15,6 +16,20 @@ impl ToString for BuildTarget {
         match self {
             BuildTarget::Debug => String::from("debug"),
             BuildTarget::Release => String::from("release"),
+        }
+    }
+}
+
+impl TryFrom<&str> for BuildTarget {
+    type Error = BargeError;
+
+    fn try_from(string: &str) -> Result<BuildTarget> {
+        if string == "debug" {
+            Ok(BuildTarget::Debug)
+        } else if string == "release" {
+            Ok(BuildTarget::Release)
+        } else {
+            Err(BargeError::InvalidValue("Invalid target specified"))
         }
     }
 }

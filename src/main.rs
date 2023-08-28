@@ -4,6 +4,7 @@ use crate::result::{BargeError, Result};
 use ansi_term::{Color, Style};
 use clap::App;
 use lazy_static::lazy_static;
+use std::convert::TryFrom;
 use std::fs::File;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -236,13 +237,7 @@ fn generate_default_makeopts() -> Result<Vec<String>> {
 
 fn parse_build_target(target: Option<&str>) -> Result<BuildTarget> {
     if let Some(target) = target {
-        if target == "debug" {
-            Ok(BuildTarget::Debug)
-        } else if target == "release" {
-            Ok(BuildTarget::Release)
-        } else {
-            Err(BargeError::InvalidValue("Invalid target specified"))
-        }
+        BuildTarget::try_from(target)
     } else {
         Ok(BuildTarget::Debug)
     }
