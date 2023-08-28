@@ -115,7 +115,7 @@ fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<
         .collect::<Vec<_>>()
         .iter()
         .map(|dependency| {
-            if dependency.starts_with(" ") || dependency.is_empty() {
+            if dependency.starts_with(' ') || dependency.is_empty() {
                 dependency.to_string()
             } else {
                 let obj_extension = format!(".{}.o:", extension);
@@ -136,10 +136,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let (library_cflags, library_ldflags) = build_library_flags(&project.external_libraries)?;
 
     let (target_cflags, target_ldflags) = match target {
-        BuildTarget::Debug => (
-            "-Og -g -fsanitize=undefined -fsanitize-trap",
-            "-ggdb",
-        ),
+        BuildTarget::Debug => ("-Og -g -fsanitize=undefined -fsanitize-trap", "-ggdb"),
         BuildTarget::Release => ("-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
