@@ -2,7 +2,7 @@
 name = "barge"
 version = "0.1.0"
 authors = ["Dénes Fintha <denes.fintha@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 ansi_term = "0.12"

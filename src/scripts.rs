@@ -35,16 +35,24 @@ impl TryFrom<&str> for ScriptKind {
 pub(crate) fn execute_script(path: &str, name: &str, env: ScriptEnvironment) -> Result<()> {
     let kind = ScriptKind::try_from(get_file_extension(path)?)?;
     match kind {
-        ScriptKind::ShellScript => { execute_shell_script(path, env)?; }
-        ScriptKind::PythonScript => { execute_python_script(path, env)?; }
-        ScriptKind::CSource => { execute_c_source(path, name, env)?; }
-        ScriptKind::CppSource => { execute_cpp_source(path, name, env)?; }
+        ScriptKind::ShellScript => {
+            execute_shell_script(path, env)?;
+        }
+        ScriptKind::PythonScript => {
+            execute_python_script(path, env)?;
+        }
+        ScriptKind::CSource => {
+            execute_c_source(path, name, env)?;
+        }
+        ScriptKind::CppSource => {
+            execute_cpp_source(path, name, env)?;
+        }
     }
     Ok(())
 }
 
 fn get_file_extension(path: &str) -> Result<&str> {
-    path.split(".")
+    path.split('.')
         .last()
         .ok_or(BargeError::NoneOption("Failed to parse file name"))
 }
@@ -59,7 +67,9 @@ fn execute_shell_script(path: &str, env: ScriptEnvironment) -> Result<()> {
     if status {
         Ok(())
     } else {
-        Err(BargeError::FailedOperation("Failed to execute shell script"))
+        Err(BargeError::FailedOperation(
+            "Failed to execute shell script",
+        ))
     }
 }
 
@@ -75,7 +85,9 @@ fn execute_python_script(path: &str, env: ScriptEnvironment) -> Result<()> {
     if status {
         Ok(())
     } else {
-        Err(BargeError::FailedOperation("Failed to execute Python script"))
+        Err(BargeError::FailedOperation(
+            "Failed to execute Python script",
+        ))
     }
 }
 
@@ -89,7 +101,9 @@ fn execute_c_source(path: &str, name: &str, env: ScriptEnvironment) -> Result<()
         .spawn()?
         .wait()?;
     if !cc.success() {
-        return Err(BargeError::FailedOperation("Failed to compile a custom build step binary"));
+        return Err(BargeError::FailedOperation(
+            "Failed to compile a custom build step binary",
+        ));
     }
 
     let step = Command::new(&target)
@@ -113,7 +127,9 @@ fn execute_cpp_source(path: &str, name: &str, env: ScriptEnvironment) -> Result<
         .spawn()?
         .wait()?;
     if !cxx.success() {
-        return Err(BargeError::FailedOperation("Failed to compile a custom build step binary"));
+        return Err(BargeError::FailedOperation(
+            "Failed to compile a custom build step binary",
+        ));
     }
 
     let step = Command::new(&target)

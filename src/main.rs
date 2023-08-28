@@ -11,8 +11,8 @@ use std::process::{Command, Stdio};
 mod makefile;
 mod output;
 mod project;
-mod scripts;
 mod result;
+mod scripts;
 
 macro_rules! hello_template {
     () => {

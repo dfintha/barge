@@ -1,7 +1,7 @@
-use crate::{color_eprintln, color_println, BLUE, NO_COLOR, RED};
 use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildTarget};
 use crate::result::{BargeError, Result};
-use crate::scripts::{ScriptEnvironment, execute_script};
+use crate::scripts::{execute_script, ScriptEnvironment};
+use crate::{color_eprintln, color_println, BLUE, NO_COLOR, RED};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -89,11 +89,7 @@ impl Project {
         };
 
         if let Some(pre_build_step) = &self.pre_build_step {
-            execute_script(
-                &pre_build_step,
-                "prebuild",
-                ScriptEnvironment {target: target}
-            )?;
+            execute_script(pre_build_step, "prebuild", ScriptEnvironment { target })?;
         }
 
         let mut make = Command::new("make")
@@ -114,11 +110,7 @@ impl Project {
 
         if status {
             if let Some(post_build_step) = &self.post_build_step {
-                execute_script(
-                    &post_build_step,
-                    "postbuild",
-                    ScriptEnvironment {target: target}
-                )?;
+                execute_script(post_build_step, "postbuild", ScriptEnvironment { target })?;
             }
 
             let finish_time = Instant::now();
