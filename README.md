@@ -29,8 +29,9 @@ for proper functionality.
 - `make`: Used internally to perform various tasks on the project.
 - `nasm`: Used to compile Assembly source files.
 - `clang (clang, clang++, clang-tidy, clang-format)`: Used to compile C/C++
-  source files, to link the executable, to run static analysis on the code, and
-  to automatically format the code.
+  source files, to link the executable, to run static analysis on the code,
+  to automatically format the code, and to compile the dependency tree of C/C++
+  object files.
 - `git`: Used to initialize a `git`˙repository on project creation.
 
 On Arch Linux, the following command installs the packages of all the required

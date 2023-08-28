@@ -43,7 +43,6 @@ NAME={}
 BINARY=bin/{}/$(NAME)
 SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC)
 OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ)
-HEADERS=$(shell find include -name '*.h*')
 
 GREEN=`tput setaf 2``tput bold`
 BLUE=`tput setaf 4``tput bold`
@@ -53,6 +52,9 @@ DIM=`tput dim`
 .PHONY: all
 
 all: $(BINARY)
+
+{}
+{}
 
 $(BINARY): $(COBJ) $(CXXOBJ) $(ASMOBJ)
 \t@mkdir -p $(shell dirname $@)
@@ -65,12 +67,12 @@ obj/{}/%.s.o: src/%.s
 \t@printf '%s%sBuilding assembly object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(ASM) $(ASMFLAGS) $< -o $@
 
-obj/{}/%.c.o: src/%.c $(HEADERS)
+obj/{}/%.c.o: src/%.c
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding C object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CC) $(CFLAGS) -c $< -o $@
 
-obj/{}/%.cpp.o: src/%.cpp $(HEADERS)
+obj/{}/%.cpp.o: src/%.cpp
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding C++ object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -94,10 +96,42 @@ analyze: $(CSRC) $(CXXSRC)
     };
 }
 
+fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<String> {
+    let sources = Command::new("find")
+        .arg("src")
+        .args(vec!["-type", "f"])
+        .args(vec!["-name", format!("*.{}", extension).as_str()])
+        .output()?
+        .stdout;
+    let sources: Vec<_> = std::str::from_utf8(&sources)?.split('\n').collect();
+    let dependencies = Command::new("clang++")
+        .arg("-MM")
+        .arg("-Iinclude")
+        .args(sources)
+        .output()?
+        .stdout;
+    let dependencies: Vec<_> = std::str::from_utf8(&dependencies)?
+        .split('\n')
+        .collect::<Vec<_>>()
+        .iter()
+        .map(|dependency| {
+            if dependency.starts_with(" ") || dependency.is_empty() {
+                dependency.to_string()
+            } else {
+                let obj_extension = format!(".{}.o:", extension);
+                format!("obj/{}/{}", target.to_string(), dependency)
+                    .replace(".o:", obj_extension.as_str())
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        .into();
+    Ok(std::str::from_utf8(&dependencies)?.to_string())
+}
+
 pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) -> Result<String> {
     let common_cflags = "-Wall -Wextra -Wpedantic -Wshadow -Wconversion \
-                         -Wdouble-promotion -Wformat=2                  \
-                         -Iinclude -Isrc";
+                         -Wdouble-promotion -Wformat=2 -Iinclude -Isrc";
 
     let (library_cflags, library_ldflags) = build_library_flags(&project.external_libraries)?;
 
@@ -141,6 +175,9 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     } else {
         ""
     };
+
+    let c_dependencies = get_dependencies_for_project(target, "c")?;
+    let cpp_dependencies = get_dependencies_for_project(target, "cpp")?;
 
     let cflags = String::from("-std=")
         + &project.c_standard
@@ -190,6 +227,8 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         ldflags,
         name,
         target.to_string(),
+        c_dependencies,
+        cpp_dependencies,
         link_command,
         target.to_string(),
         target.to_string(),
