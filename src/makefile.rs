@@ -95,14 +95,17 @@ analyze: $(CSRC) $(CXXSRC)
 }
 
 pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) -> Result<String> {
-    let common_cflags = "-Wall -Wextra -pedantic \
-                         -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion \
+    let common_cflags = "-Wall -Wextra -Wpedantic -Wshadow -Wconversion \
+                         -Wdouble-promotion -Wformat=2                  \
                          -Iinclude -Isrc";
 
     let (library_cflags, library_ldflags) = build_library_flags(&project.external_libraries)?;
 
     let (target_cflags, target_ldflags) = match target {
-        BuildTarget::Debug => ("-Og -g", "-ggdb"),
+        BuildTarget::Debug => (
+            "-Og -g -fsanitize=undefined -fsanitize-trap",
+            "-ggdb",
+        ),
         BuildTarget::Release => ("-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
@@ -163,7 +166,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         + &custom_cxxflags
         + pic_flag;
 
-    let ldflags = library_ldflags + " " + &custom_ldflags + " " + target_ldflags;
+    let ldflags = target_ldflags.to_owned() + " " + &library_ldflags + " " + &custom_ldflags;
 
     let name = match project.project_type {
         ProjectType::Executable => project.name.clone(),
