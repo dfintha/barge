@@ -1,5 +1,11 @@
-use crate::result::Result;
+use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildTarget};
+use crate::result::{BargeError, Result};
+use crate::{color_eprintln, color_println, BLUE, NO_COLOR, RED};
 use serde::{Deserialize, Serialize};
+use std::io::Write;
+use std::process::{Command, Stdio};
+use std::time::Instant;
+use sysinfo::SystemExt;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -39,7 +45,7 @@ pub(crate) struct Project {
 }
 
 impl Project {
-    pub fn new(name: &str) -> Result<Project> {
+    pub(crate) fn new(name: &str) -> Result<Project> {
         Ok(Project {
             name: name.to_string(),
             project_type: ProjectType::Executable,
@@ -55,9 +61,159 @@ impl Project {
         })
     }
 
-    pub fn load(path: &str) -> Result<Project> {
+    pub(crate) fn load(path: &str) -> Result<Project> {
         let json = std::fs::read_to_string(path)?;
         let project: Project = serde_json::from_str(&json)?;
         Ok(project)
     }
+
+    pub(crate) fn build(&self, target: BuildTarget) -> Result<()> {
+        color_println!(
+            BLUE,
+            "Building project with {} configuration",
+            target.to_string()
+        );
+        let start_time = Instant::now();
+
+        let makeopts = if let Some(makeopts) = &self.custom_makeopts {
+            makeopts.split(' ').map(|str| str.to_string()).collect()
+        } else {
+            generate_default_makeopts()?
+        };
+
+        let mut make = Command::new("make")
+            .arg("-s")
+            .arg("-f")
+            .arg("-")
+            .arg("all")
+            .args(makeopts)
+            .stdin(Stdio::piped())
+            .spawn()?;
+
+        let makefile = generate_build_makefile(self, target)?;
+        make.stdin
+            .as_mut()
+            .ok_or(BargeError::NoneOption("Could not interact with make"))?
+            .write_all(makefile.as_bytes())?;
+        let status = make.wait()?.success();
+
+        if status {
+            let finish_time = Instant::now();
+            let build_duration = finish_time - start_time;
+            color_println!(
+                BLUE,
+                "Build finished in {:.2} seconds",
+                build_duration.as_secs_f64()
+            );
+            Ok(())
+        } else {
+            color_eprintln!("Build failed");
+            Err(BargeError::FailedOperation(
+                "One or more dependencies failed to build",
+            ))
+        }
+    }
+
+    pub(crate) fn rebuild(&self, target: BuildTarget) -> Result<()> {
+        color_println!(BLUE, "{}", "Removing relevant build artifacts");
+        std::fs::remove_dir_all(format!("./bin/{}", target.to_string()))?;
+        std::fs::remove_dir_all(format!("./obj/{}", target.to_string()))?;
+        self.build(target)
+    }
+
+    pub(crate) fn analyze(&self) -> Result<()> {
+        color_println!(BLUE, "Running static analysis on project");
+
+        let mut make = Command::new("make")
+            .arg("-s")
+            .arg("-f")
+            .arg("-")
+            .arg("analyze")
+            .stdin(Stdio::piped())
+            .spawn()?;
+
+        let makefile = generate_analyze_makefile(self)?;
+
+        make.stdin
+            .as_mut()
+            .ok_or(BargeError::NoneOption("Could not interact with make"))?
+            .write_all(makefile.as_bytes())?;
+        make.wait()?;
+
+        Ok(())
+    }
+
+    pub(crate) fn run(&self, target: BuildTarget) -> Result<()> {
+        if self.project_type != ProjectType::Executable {
+            color_eprintln!("Only binary projects can be run");
+            return Ok(());
+        }
+
+        self.build(target)?;
+
+        let path = String::from("bin/") + &target.to_string() + "/" + &self.name;
+        color_println!(BLUE, "Running executable {}", &path);
+        Command::new(&path).spawn()?.wait()?;
+        Ok(())
+    }
+
+    pub(crate) fn format(&self) -> Result<()> {
+        let sources = collect_source_files()?;
+        let style_arg = if let Some(format_style) = &self.format_style {
+            "--style=".to_string() + &format_style
+        } else {
+            "--style=Google".to_string()
+        };
+
+        Command::new("clang-format")
+            .arg("-i")
+            .arg(style_arg)
+            .args(sources)
+            .spawn()?
+            .wait()?;
+
+        color_println!(BLUE, "The project source files were formatted");
+        Ok(())
+    }
+}
+
+fn generate_default_makeopts() -> Result<Vec<String>> {
+    let mut system = sysinfo::System::new_all();
+    system.refresh_all();
+
+    let processor_cores = system.processors().len() as u64;
+    let free_memory_in_kb = system.total_memory() - system.used_memory();
+    let free_2g_memory = free_memory_in_kb / (2 * 1024 * 1024);
+    let parallel_jobs = std::cmp::max(1, std::cmp::min(processor_cores, free_2g_memory));
+
+    Ok(vec![format!("-j{}", parallel_jobs)])
+}
+
+pub(crate) fn collect_source_files() -> Result<Vec<String>> {
+    let find_src = Command::new("find")
+        .arg("src")
+        .args(vec!["-type", "f"])
+        .args(vec!["-name", "*.c"])
+        .args(vec!["-o", "-name", "*.cpp"])
+        .args(vec!["-o", "-name", "*.s"])
+        .args(vec!["-o", "-name", "*.h"])
+        .args(vec!["-o", "-name", "*.hpp"])
+        .output()?
+        .stdout;
+
+    let mut find_src: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
+
+    let find_include = Command::new("find")
+        .arg("include")
+        .args(vec!["-type", "f"])
+        .args(vec!["-name", "*.h"])
+        .args(vec!["-o", "-name", "*.hpp"])
+        .output()?
+        .stdout;
+
+    let mut found: Vec<_> = std::str::from_utf8(&find_include)?.split('\n').collect();
+    found.append(&mut find_src);
+    found.retain(|str| !str.is_empty());
+
+    Ok(found.iter().map(|s| s.to_string()).collect())
 }
