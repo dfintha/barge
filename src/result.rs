@@ -8,6 +8,7 @@ pub(crate) enum BargeError {
     ClapError(clap::Error),
     NoneOption(&'static str),
     InvalidValue(&'static str),
+    FailedOperation(&'static str),
 }
 
 impl From<std::io::Error> for BargeError {

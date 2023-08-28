@@ -112,16 +112,23 @@ fn build(project: &Project, target: BuildTarget) -> Result<()> {
         .as_mut()
         .ok_or(BargeError::NoneOption("Could not interact with make"))?
         .write_all(makefile.as_bytes())?;
-    make.wait()?;
+    let status = make.wait()?.success();
 
-    let finish_time = Instant::now();
-    let build_duration = finish_time - start_time;
-    color_println!(
-        BLUE,
-        "Build finished in {:.2} seconds",
-        build_duration.as_secs_f64()
-    );
-    Ok(())
+    if status {
+        let finish_time = Instant::now();
+        let build_duration = finish_time - start_time;
+        color_println!(
+            BLUE,
+            "Build finished in {:.2} seconds",
+            build_duration.as_secs_f64()
+        );
+        Ok(())
+    } else {
+        color_eprintln!("Build failed");
+        Err(BargeError::FailedOperation(
+            "One or more dependencies failed to build",
+        ))
+    }
 }
 
 fn rebuild(project: &Project, target: BuildTarget) -> Result<()> {
@@ -356,12 +363,13 @@ fn main() -> Result<()> {
     let result = parse_and_run_subcommands();
     if let Err(error) = &result {
         match error {
-            BargeError::StdIoError(e) => color_eprintln!("error: {}", e.to_string()),
-            BargeError::StdStrUtf8Error(e) => color_eprintln!("error: {}", e.to_string()),
-            BargeError::SerdeJsonError(e) => color_eprintln!("error: {}", e.to_string()),
+            BargeError::StdIoError(e) => color_eprintln!("{}", e.to_string()),
+            BargeError::StdStrUtf8Error(e) => color_eprintln!("{}", e.to_string()),
+            BargeError::SerdeJsonError(e) => color_eprintln!("{}", e.to_string()),
             BargeError::ClapError(e) => color_eprintln!("{}", e.to_string()),
-            BargeError::NoneOption(s) => color_eprintln!("error: {}", s),
-            BargeError::InvalidValue(s) => color_eprintln!("error: {}", s),
+            BargeError::NoneOption(s) => color_eprintln!("{}", s),
+            BargeError::InvalidValue(s) => color_eprintln!("{}", s),
+            BargeError::FailedOperation(s) => color_eprintln!("{}", s),
         };
         std::process::exit(1);
     }
