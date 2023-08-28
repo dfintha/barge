@@ -1,6 +1,7 @@
+use crate::{color_eprintln, color_println, BLUE, NO_COLOR, RED};
 use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildTarget};
 use crate::result::{BargeError, Result};
-use crate::{color_eprintln, color_println, BLUE, NO_COLOR, RED};
+use crate::scripts::{ScriptEnvironment, execute_script};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -42,6 +43,10 @@ pub(crate) struct Project {
     pub custom_makeopts: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format_style: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pre_build_step: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub post_build_step: Option<String>,
 }
 
 impl Project {
@@ -58,6 +63,8 @@ impl Project {
             custom_ldflags: None,
             custom_makeopts: None,
             format_style: None,
+            pre_build_step: None,
+            post_build_step: None,
         })
     }
 
@@ -81,6 +88,14 @@ impl Project {
             generate_default_makeopts()?
         };
 
+        if let Some(pre_build_step) = &self.pre_build_step {
+            execute_script(
+                &pre_build_step,
+                "prebuild",
+                ScriptEnvironment {target: target}
+            )?;
+        }
+
         let mut make = Command::new("make")
             .arg("-s")
             .arg("-f")
@@ -98,6 +113,14 @@ impl Project {
         let status = make.wait()?.success();
 
         if status {
+            if let Some(post_build_step) = &self.post_build_step {
+                execute_script(
+                    &post_build_step,
+                    "postbuild",
+                    ScriptEnvironment {target: target}
+                )?;
+            }
+
             let finish_time = Instant::now();
             let build_duration = finish_time - start_time;
             color_println!(
@@ -105,6 +128,7 @@ impl Project {
                 "Build finished in {:.2} seconds",
                 build_duration.as_secs_f64()
             );
+
             Ok(())
         } else {
             color_eprintln!("Build failed");

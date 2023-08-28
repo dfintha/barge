@@ -105,6 +105,11 @@ following fields.
   The supported format styles are the ones supported by `clang-format`. If `file` is given,
   `clang-format` will look for a `.clang-format` file in parent directories relative to the given
   source file.
+- **pre_build_step (string, optional)**:
+  A script or C/C++ source file to execute before starting a build.
+- **post_build_step (string, optional)**:
+  A script or C/C++ source file to execute after a successful build.
+
 
 ### Specific project file, which contains all the optional fields
 
@@ -130,7 +135,9 @@ following fields.
     "custom_cxxflags": "-DNDEBUG",
     "custom_ldflags": "-ggdb",
     "custom_makeopts": "-j2",
-    "format_style": "Google"
+    "format_style": "Google",
+    "pre_build_step": "prebuild.py",
+    "post_build_step": "postbuild.cpp"
 }
 ```
 
@@ -145,3 +152,21 @@ following fields.
     "cpp_standard": "c++14"
 }
 ```
+
+## Pre-build and post-build scripts
+
+Executables for `pre_build_step` and `post_build_step` support the following file types, and the
+interpreter or compiler is chosen based on the file extension.
+
+- `bash` script (`.sh`)
+- Python 3 script (`.py`)
+- C source file (`.c`)
+- C++ source file (`.cpp`)
+
+Obviously, the `bash` and `python3` interpreters must be present for their respective scripts to
+work. C/C++ build steps are compiled using the C11/C++17 standards.
+
+During their execution, these scripts/binaries have the following environment variables set (this
+list will be expanded in the future).
+
+- `BARGE_BUILD_TARGET`: The build target, either `debug` or `release`.
