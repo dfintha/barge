@@ -1,9 +1,8 @@
 use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildTarget};
+use crate::output::*;
 use crate::project::{Project, ProjectType};
 use crate::result::{BargeError, Result};
-use ansi_term::{Color, Style};
 use clap::App;
-use lazy_static::lazy_static;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::Write;
@@ -12,36 +11,9 @@ use std::time::Instant;
 use sysinfo::SystemExt;
 
 mod makefile;
+mod output;
 mod project;
 mod result;
-
-lazy_static! {
-    static ref NO_COLOR: bool = std::env::var("NO_COLOR").is_ok();
-    static ref BLUE: Style = Style::new().bold().fg(Color::Blue);
-    static ref GREEN: Style = Style::new().bold().fg(Color::Green);
-    static ref RED: Style = Style::new().bold().fg(Color::Red);
-    static ref WHITE: Style = Style::new().bold().fg(Color::White);
-}
-
-macro_rules! color_println {
-    ($style:tt, $($arg:tt)*) => {
-        if *NO_COLOR {
-            println!("{}", format!($($arg)*))
-        } else {
-            println!("{}", $style.paint(format!($($arg)*)))
-        }
-    }
-}
-
-macro_rules! color_eprintln {
-    ($($arg:tt)*) => {
-        if *NO_COLOR {
-            eprintln!("{}", format!($($arg)*))
-        } else {
-            eprintln!("{}", RED.paint(format!($($arg)*)))
-        }
-    }
-}
 
 macro_rules! hello_template {
     () => {

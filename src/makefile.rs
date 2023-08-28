@@ -1,4 +1,5 @@
 use crate::project::{Library, Project, ProjectType};
+use crate::output::NO_COLOR;
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
 use std::convert::TryFrom;
@@ -193,7 +194,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         ProjectType::StaticLibrary => "@ar rcs $@ $(OBJECTS)",
     };
 
-    let colorization = if std::env::var("NO_COLOR").is_ok() {
+    let colorization = if *NO_COLOR {
         "
         GREEN=''
         BLUE=''
