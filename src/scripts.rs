@@ -1,6 +1,5 @@
 use crate::makefile::BuildTarget;
 use crate::result::{BargeError, Result};
-use std::convert::TryFrom;
 use std::process::Command;
 
 enum ScriptKind {

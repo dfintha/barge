@@ -2,7 +2,6 @@ use crate::output::NO_COLOR;
 use crate::project::{Library, Project, ProjectType};
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
-use std::convert::TryFrom;
 use std::process::Command;
 use std::string::ToString;
 

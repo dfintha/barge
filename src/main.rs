@@ -3,7 +3,6 @@ use crate::output::*;
 use crate::project::{collect_source_files, Project};
 use crate::result::{BargeError, Result};
 use clap::App;
-use std::convert::TryFrom;
 use std::fs::File;
 use std::io::Write;
 use std::process::{Command, Stdio};
