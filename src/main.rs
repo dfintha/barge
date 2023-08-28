@@ -16,6 +16,7 @@ mod project;
 mod result;
 
 lazy_static! {
+    static ref NO_COLOR: bool = std::env::var("NO_COLOR").is_ok();
     static ref BLUE: Style = Style::new().bold().fg(Color::Blue);
     static ref GREEN: Style = Style::new().bold().fg(Color::Green);
     static ref RED: Style = Style::new().bold().fg(Color::Red);
@@ -24,13 +25,21 @@ lazy_static! {
 
 macro_rules! color_println {
     ($style:tt, $($arg:tt)*) => {
-        println!("{}", $style.paint(format!($($arg)*)))
+        if *NO_COLOR {
+            println!("{}", format!($($arg)*))
+        } else {
+            println!("{}", $style.paint(format!($($arg)*)))
+        }
     }
 }
 
 macro_rules! color_eprintln {
     ($($arg:tt)*) => {
-        eprintln!("{}", RED.paint(format!($($arg)*)))
+        if *NO_COLOR {
+            eprintln!("{}", format!($($arg)*))
+        } else {
+            eprintln!("{}", RED.paint(format!($($arg)*)))
+        }
     }
 }
 

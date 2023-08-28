@@ -59,10 +59,7 @@ BINARY=bin/{}/$(NAME)
 SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC)
 OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ)
 
-GREEN=`tput setaf 2``tput bold`
-BLUE=`tput setaf 4``tput bold`
-RESET=`tput sgr0`
-DIM=`tput dim`
+{}
 
 .PHONY: all
 
@@ -229,6 +226,22 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         ProjectType::StaticLibrary => "@ar rcs $@ $(OBJECTS)",
     };
 
+    let colorization = if std::env::var("NO_COLOR").is_ok() {
+        "
+        GREEN=''
+        BLUE=''
+        RESET=''
+        DIM=''
+        "
+    } else {
+        "
+        GREEN=`tput setaf 2``tput bold`
+        BLUE=`tput setaf 4``tput bold`
+        RESET=`tput sgr0`
+        DIM=`tput dim`
+        "
+    };
+
     let result = format!(
         build_makefile_template!(),
         target.to_string(),
@@ -239,6 +252,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         ldflags,
         name,
         target.to_string(),
+        colorization,
         c_dependencies,
         cpp_dependencies,
         link_command,

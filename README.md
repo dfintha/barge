@@ -15,6 +15,9 @@ Source and header files shall have appropriate file extensions based on their
 type: `.c` for C source files, `.cpp` for C++ source files, `.s` for Assembly
 source files, `.h` for C header files, and `.hpp` for C++ header files.
 
+`barge` supports the [`NO_COLOR`](https://no-color.org/) environment variable:
+if it is set, no output will be colorized using ANSI terminal escape codes.
+
 **Please note that the development of this software is in a very early stage.
 As such, changes to the project file format and/or usage can happen
 frequently.**
