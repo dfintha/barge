@@ -2,6 +2,7 @@ use crate::makefile::BuildTarget;
 use crate::output::*;
 use crate::project::{collect_source_files, Project};
 use crate::result::{BargeError, Result};
+use crate::utilities::attempt_remove_directory;
 use clap::App;
 use std::fs::File;
 use std::io::Write;
@@ -12,6 +13,7 @@ mod output;
 mod project;
 mod result;
 mod scripts;
+mod utilities;
 
 macro_rules! hello_template {
     () => {
@@ -56,8 +58,8 @@ fn init(name: &str) -> Result<()> {
 
 fn clean() -> Result<()> {
     color_println!(BLUE, "{}", "Removing build artifacts");
-    let _bin = std::fs::remove_dir_all("bin");
-    let _obj = std::fs::remove_dir_all("obj");
+    attempt_remove_directory("bin")?;
+    attempt_remove_directory("obj")?;
     Ok(())
 }
 

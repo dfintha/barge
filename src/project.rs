@@ -1,6 +1,7 @@
 use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildTarget};
 use crate::result::{BargeError, Result};
 use crate::scripts::{execute_script, ScriptEnvironment};
+use crate::utilities::attempt_remove_directory;
 use crate::{color_eprintln, color_println, BLUE, NO_COLOR, RED};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
@@ -132,8 +133,10 @@ impl Project {
 
     pub(crate) fn rebuild(&self, target: BuildTarget) -> Result<()> {
         color_println!(BLUE, "{}", "Removing relevant build artifacts");
-        std::fs::remove_dir_all(format!("./bin/{}", target.to_string()))?;
-        std::fs::remove_dir_all(format!("./obj/{}", target.to_string()))?;
+        let path = format!("./bin/{}", target.to_string());
+        attempt_remove_directory(&path)?;
+        let path = format!("./obj/{}", target.to_string());
+        attempt_remove_directory(&path)?;
         self.build(target)
     }
 
