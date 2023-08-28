@@ -366,7 +366,7 @@ fn main() -> Result<()> {
             BargeError::StdIoError(e) => color_eprintln!("{}", e.to_string()),
             BargeError::StdStrUtf8Error(e) => color_eprintln!("{}", e.to_string()),
             BargeError::SerdeJsonError(e) => color_eprintln!("{}", e.to_string()),
-            BargeError::ClapError(e) => color_eprintln!("{}", e.to_string()),
+            BargeError::ClapError(e) => println!("{}", e.to_string()),
             BargeError::NoneOption(s) => color_eprintln!("{}", s),
             BargeError::InvalidValue(s) => color_eprintln!("{}", s),
             BargeError::FailedOperation(s) => color_eprintln!("{}", s),
