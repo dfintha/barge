@@ -2,9 +2,10 @@ use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildT
 use crate::result::{BargeError, Result};
 use crate::scripts::{execute_script, ScriptEnvironment};
 use crate::utilities::attempt_remove_directory;
-use crate::{color_eprintln, color_println, BLUE, NO_COLOR, RED};
+use crate::{color_eprintln, color_println, BLUE, GREEN, NO_COLOR, RED};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Instant;
 use sysinfo::SystemExt;
@@ -209,6 +210,30 @@ impl Project {
 
         color_println!(BLUE, "The project source files were formatted");
         Ok(())
+    }
+
+    pub(crate) fn document(&self) -> Result<()> {
+        color_println!(BLUE, "Generating project documentation");
+        if !Path::new("Doxyfile").exists() {
+            return Err(BargeError::FailedOperation(
+                "Doxyfile is missing from the project directory",
+            ));
+        }
+
+        let doxygen = Command::new("doxygen")
+            .arg("Doxyfile")
+            .env("BARGE_PROJECT_NAME", &self.name)
+            .env("BARGE_PROJECT_VERSION", &self.version)
+            .spawn()?
+            .wait()?;
+        if doxygen.success() {
+            color_println!(GREEN, "Project documentation successfully generated");
+            Ok(())
+        } else {
+            Err(BargeError::FailedOperation(
+                "Failed to generate documentation using doxygen",
+            ))
+        }
     }
 }
 

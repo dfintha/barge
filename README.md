@@ -36,11 +36,12 @@ for proper functionality.
   to automatically format the code, and to compile the dependency tree of C/C++
   object files.
 - `git`: Used to initialize a `git`˙repository on project creation.
+- `doxygen`: Used to generate HTML documentation for projects.
 
 On Arch Linux, the following command installs the packages of all the required
 dependencies.
 
-`pacman -S coreutils findutils make nasm clang git`
+`pacman -S coreutils findutils make nasm clang git doxygen`
 
 ## Subcommands
 
@@ -59,6 +60,8 @@ dependencies.
 - `lines`: Displays the amount of lines of source code for the whole project.
 - `analyze`: Performs static analysis for the C/C++ source files in the project.
 - `format`, `fmt` : Formats the source files in-place using `clang-format`.
+- `doc` : Generates HTML documentation for the project using `doxygen`. This
+  requires a `Doxyfile` to be present at the project root.
 
 The `build`, `rebuild`, and `run` subcommands have an optional argument, which
 represents the configuration (target) of the build. The currently supported
