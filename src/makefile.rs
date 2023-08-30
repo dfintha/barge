@@ -245,30 +245,33 @@ fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<
         .args(vec!["-name", format!("*.{}", extension).as_str()])
         .output()?
         .stdout;
-    let sources: Vec<_> = std::str::from_utf8(&sources)?.split('\n').collect();
-    let dependencies = Command::new("clang++")
-        .arg("-MM")
-        .arg("-Iinclude")
-        .args(sources)
-        .output()?
-        .stdout;
-    let dependencies: Vec<_> = std::str::from_utf8(&dependencies)?
-        .split('\n')
-        .collect::<Vec<_>>()
+    let mut sources: Vec<&str> = std::str::from_utf8(&sources)?.split('\n').collect();
+    sources.retain(|source| !source.is_empty());
+
+    let dependencies: Vec<_> = sources
         .iter()
-        .map(|dependency| {
-            if dependency.starts_with(' ') || dependency.is_empty() {
-                dependency.to_string()
+        .map(|file| {
+            let object = if let Some(name) = file.strip_prefix("src/") {
+                format!("obj/{}/{}.o", target.to_string(), name)
             } else {
-                let obj_extension = format!(".{}.o:", extension);
-                format!("obj/{}/{}", target.to_string(), dependency)
-                    .replace(".o:", obj_extension.as_str())
-            }
+                String::from("")
+            };
+
+            Command::new("clang++")
+                .arg("-MM")
+                .arg("-MT")
+                .arg(&object)
+                .arg("-Iinclude")
+                .arg("-Isrc")
+                .arg(file)
+                .output()
         })
-        .collect::<Vec<_>>()
-        .join("\n")
-        .into();
-    Ok(std::str::from_utf8(&dependencies)?.to_string())
+        .filter_map(|result| result.ok())
+        .map(|result| String::from_utf8(result.stdout))
+        .filter_map(|result| result.ok())
+        .collect::<Vec<_>>();
+
+    Ok(dependencies.join(""))
 }
 
 fn call_pkg_config(name: &str, mode: &str) -> Result<String> {
