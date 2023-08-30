@@ -1,5 +1,7 @@
 use crate::makefile::BuildTarget;
 use crate::result::{BargeError, Result};
+use crate::NO_COLOR;
+use std::collections::HashMap;
 use std::process::Command;
 
 enum ScriptKind {
@@ -9,8 +11,10 @@ enum ScriptKind {
     CppSource,
 }
 
-pub(crate) struct ScriptEnvironment {
+pub(crate) struct ScriptEnvironment<'a> {
     pub target: BuildTarget,
+    pub name: &'a String,
+    pub version: &'a String,
 }
 
 impl TryFrom<&str> for ScriptKind {
@@ -57,31 +61,29 @@ fn get_file_extension(path: &str) -> Result<&str> {
 }
 
 fn execute_shell_script(path: &str, env: ScriptEnvironment) -> Result<()> {
-    let bash = Command::new("bash")
+    let interpreter = Command::new("bash")
         .arg(path)
-        .env("BARGE_BUILD_TARGET", env.target.to_string().as_str())
+        .envs(unpack_script_environment(env))
         .spawn()?
         .wait()?;
-    let status = bash.success();
-    if status {
+    if interpreter.success() {
         Ok(())
     } else {
         Err(BargeError::FailedOperation(
-            "Failed to execute shell script",
+            "Failed to execute shell (bash) script",
         ))
     }
 }
 
 fn execute_python_script(path: &str, env: ScriptEnvironment) -> Result<()> {
-    let python = Command::new("env")
+    let interpreter = Command::new("env")
         .arg("-S")
         .arg("python3")
         .arg(path)
-        .env("BARGE_BUILD_TARGET", env.target.to_string().as_str())
+        .envs(unpack_script_environment(env))
         .spawn()?
         .wait()?;
-    let status = python.success();
-    if status {
+    if interpreter.success() {
         Ok(())
     } else {
         Err(BargeError::FailedOperation(
@@ -106,9 +108,10 @@ fn execute_c_source(path: &str, name: &str, env: ScriptEnvironment) -> Result<()
     }
 
     let step = Command::new(&target)
-        .env("BARGE_BUILD_TARGET", env.target.to_string().as_str())
+        .envs(unpack_script_environment(env))
         .spawn()?
         .wait()?;
+
     if step.success() {
         Ok(())
     } else {
@@ -132,12 +135,35 @@ fn execute_cpp_source(path: &str, name: &str, env: ScriptEnvironment) -> Result<
     }
 
     let step = Command::new(&target)
-        .env("BARGE_BUILD_TARGET", env.target.to_string().as_str())
+        .envs(unpack_script_environment(env))
         .spawn()?
         .wait()?;
+
     if step.success() {
         Ok(())
     } else {
         Err(BargeError::FailedOperation("Custom build step failed"))
     }
+}
+
+fn unpack_script_environment(env: ScriptEnvironment) -> HashMap<String, String> {
+    let mut result: HashMap<String, String> = HashMap::new();
+    result.insert(String::from("BARGE_PROJECT_NAME"), env.name.to_string());
+    result.insert(
+        String::from("BARGE_PROJECT_VERSION"),
+        env.version.to_string(),
+    );
+    result.insert(String::from("BARGE_BUILD_TARGET"), env.target.to_string());
+    result.insert(
+        String::from("BARGE_OBJECTS_DIR"),
+        format!("obj/{}", env.target.to_string()),
+    );
+    result.insert(
+        String::from("BARGE_BINARY_DIR"),
+        format!("bin/{}", env.target.to_string()),
+    );
+    if *NO_COLOR {
+        result.insert(String::from("NO_COLOR"), String::from("1"));
+    }
+    result
 }

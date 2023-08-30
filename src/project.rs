@@ -90,7 +90,15 @@ impl Project {
         };
 
         if let Some(pre_build_step) = &self.pre_build_step {
-            execute_script(pre_build_step, "prebuild", ScriptEnvironment { target })?;
+            execute_script(
+                pre_build_step,
+                "prebuild",
+                ScriptEnvironment {
+                    target,
+                    name: &self.name,
+                    version: &self.version,
+                },
+            )?;
         }
 
         let mut make = Command::new("make")
@@ -111,7 +119,15 @@ impl Project {
 
         if status {
             if let Some(post_build_step) = &self.post_build_step {
-                execute_script(post_build_step, "postbuild", ScriptEnvironment { target })?;
+                execute_script(
+                    post_build_step,
+                    "postbuild",
+                    ScriptEnvironment {
+                        target,
+                        name: &self.name,
+                        version: &self.version,
+                    },
+                )?;
             }
 
             let finish_time = Instant::now();

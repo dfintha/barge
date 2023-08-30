@@ -166,7 +166,11 @@ interpreter or compiler is chosen based on the file extension.
 Obviously, the `bash` and `python3` interpreters must be present for their respective scripts to
 work. C/C++ build steps are compiled using the C11/C++17 standards.
 
-During their execution, these scripts/binaries have the following environment variables set (this
-list will be expanded in the future).
+During their execution, these scripts/binaries have the following environment variables set.
 
 - `BARGE_BUILD_TARGET`: The build target, either `debug` or `release`.
+- `BARGE_PROJECT_NAME`: The name of the project.
+- `BARGE_PROJECT_VERSION`: The version of the project.
+- `BARGE_OBJECTS_DIR`: The directory where object files reside.
+- `BARGE_BINARY_DIR`: The directory where the compiled binary resides.
+- `NO_COLOR`: If set when `barge` was executed, is also set in the scripts.
