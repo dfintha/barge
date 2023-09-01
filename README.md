@@ -78,39 +78,42 @@ The user can specify the settings to their project by changing `barge.json` at
 the project root. This file contains a single configuration object with the
 following fields.
 
-- **name (string)**:
+- **`name` (string)**:
   The name of the project.
-- **project_type (string)**:
-  The type of the project. Can be either `executable`, `shared_library`, or `static_library`.
-- **version (string)**:
+- **`project_type` (string)**:
+  The type of the project. Can be either `executable`, `shared_library`, or
+  `static_library`.
+- **`version (string)`**:
   The version of the project.
-- **c_standard (string)**:
+- **`c_standard (string)`**:
   The C standard used for the C source files, in a format like "c99".
-- **cpp_standard (string)**:
+- **`cpp_standard (string)`**:
   The C++ standard used for the C source files, in a format like "c++14".
-- **external_libraries (list of objects, optional)**:
+- **`external_libraries` (list of objects, optional)**:
   The list of external libraries to link with. This is a list of objects, which
   are represented in one of the following ways.
-  - Using pkg-config: { type: "pkg_config", name: "LIBRARY_NAME" }
-  - Manually specifying flags: { type: "manual", "cflags": "LIBRARY_CFLAGS", ldflags: "LIBRARY_LDFLAGS"}
-- **custom_cflags (string, optional)**:
+  - Using pkg-config: `{ type: "pkg_config", name: "LIBRARY_NAME" }``
+  - Manually specifying flags: `{ type: "manual", "cflags": "LIBRARY_CFLAGS",
+    ldflags: "LIBRARY_LDFLAGS"}`
+- **`custom_cflags` (string, optional)**:
   Adds the flags specified here to the C source file compilation command line.
-- **custom_cxxflags (string, optional)**:
+- **`custom_cxxflags` (string, optional)**:
   Adds the flags specified here to the C++ source file compilation command line.
-- **custom_ldflags (string, optional)**:
+- **`custom_ldflags` (string, optional)**:
   Adds the flags specified here to the executable linking command line.
-- **custom_makeopts (string, optional)**:
-  Adds the flags specified here to the GNU make command line. If none given, the default makeopts
-  will only specify the amount of parallel jobs. This is the minimum of the logical cores and the
-  amount of free memory divided by 2 GiB.
-- **format_style (string, optional)**:
-  The style in which clang-format formats the project sources. If none given, the default is Google.
-  The supported format styles are the ones supported by `clang-format`. If `file` is given,
-  `clang-format` will look for a `.clang-format` file in parent directories relative to the given
-  source file.
-- **pre_build_step (string, optional)**:
+- **`custom_makeopts` (string, optional)**:
+  Adds the flags specified here to the GNU make command line. If none given,
+  the default makeopts will only specify the amount of parallel jobs. This is
+  the minimum of the logical cores and the amount of free memory divided by 2
+  GiB.
+- **`format_style` (string, optional)**:
+  The style in which clang-format formats the project sources. If none given,
+  the default is Google. The supported format styles are the ones supported by
+  `clang-format`. If `file` is given, `clang-format` will look for a
+  `.clang-format` file in parent directories relative to the given source file.
+- **`pre_build_step` (string, optional)**:
   A script or C/C++ source file to execute before starting a build.
-- **post_build_step (string, optional)**:
+- **`post_build_step` (string, optional)**:
   A script or C/C++ source file to execute after a successful build.
 
 
@@ -158,8 +161,9 @@ following fields.
 
 ## Pre-build and post-build scripts
 
-Executables for `pre_build_step` and `post_build_step` support the following file types, and the
-interpreter or compiler is chosen based on the file extension.
+Executables for `pre_build_step` and `post_build_step` support the following
+file types, and the interpreter or compiler is chosen based on the file
+extension.
 
 - `bash` script (`.sh`)
 - Python 3 script (`.py`)
