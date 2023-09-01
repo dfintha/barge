@@ -16,6 +16,8 @@ pub(crate) struct ScriptEnvironment<'a> {
     pub target: BuildTarget,
     pub name: &'a String,
     pub version: &'a String,
+    pub authors: String,
+    pub description: &'a String,
 }
 
 impl TryFrom<&str> for ScriptKind {
@@ -132,6 +134,11 @@ fn execute_clang_source(
 fn unpack_script_environment(env: ScriptEnvironment) -> HashMap<String, String> {
     let mut result: HashMap<String, String> = HashMap::new();
     result.insert(String::from("BARGE_PROJECT_NAME"), env.name.to_string());
+    result.insert(String::from("BARGE_PROJECT_AUTHORS"), env.authors);
+    result.insert(
+        String::from("BARGE_PROJECT_DESCRIPTION"),
+        env.description.to_string(),
+    );
     result.insert(
         String::from("BARGE_PROJECT_VERSION"),
         env.version.to_string(),

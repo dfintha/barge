@@ -80,6 +80,10 @@ following fields.
 
 - **`name` (string)**:
   The name of the project.
+- **`authors` (list of strings)**:
+  The authors of the project in `git` committer format.
+- **`description` (string)**:
+  A short descriptions about the project.
 - **`project_type` (string)**:
   The type of the project. Can be either `executable`, `shared_library`, or
   `static_library`.
@@ -122,6 +126,8 @@ following fields.
 ```json
 {
     "name": "example",
+    "authors": ["Somebody <somebody@example.org>"],
+    "description": "An awesome example project.",
     "project_type": "executable",
     "version": "0.1.0",
     "c_standard": "c99",
@@ -152,6 +158,8 @@ following fields.
 ```json
 {
     "name": "example",
+    "authors": ["Somebody <somebody@example.org>"],
+    "description": "An awesome example project.",
     "project_type": "executable",
     "version": "0.1.0",
     "c_standard": "c99",
@@ -179,7 +187,9 @@ During their execution, these scripts/binaries have the following environment
 variables set.
 
 - `BARGE_BUILD_TARGET`: The build target, either `debug` or `release`.
-- `BARGE_PROJECT_NAME`: The name of the project.
+- `BARGE_PROJECT_NAME`: Name of the project.
+- `BARGE_PROJECT_DESCRIPTION`: Short description of the project.
+- `BARGE_PROJECT_AUTHORS`: Comma-separated list of the authors of the project.
 - `BARGE_PROJECT_VERSION`: The version of the project.
 - `BARGE_OBJECTS_DIR`: The directory where object files reside.
 - `BARGE_BINARY_DIR`: The directory where the compiled binary resides.

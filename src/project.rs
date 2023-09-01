@@ -29,6 +29,8 @@ pub enum ProjectType {
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Project {
     pub name: String,
+    pub authors: Vec<String>,
+    pub description: String,
     pub project_type: ProjectType,
     pub version: String,
     pub c_standard: String,
@@ -55,6 +57,8 @@ impl Project {
     pub(crate) fn new(name: &str) -> Result<Project> {
         Ok(Project {
             name: name.to_string(),
+            authors: vec![get_git_user()?],
+            description: String::from(""),
             project_type: ProjectType::Executable,
             version: String::from("0.1.0"),
             c_standard: String::from("c11"),
@@ -98,6 +102,8 @@ impl Project {
                     target,
                     name: &self.name,
                     version: &self.version,
+                    authors: self.authors.join(", "),
+                    description: &self.description,
                 },
             )?;
         }
@@ -127,6 +133,8 @@ impl Project {
                         target,
                         name: &self.name,
                         version: &self.version,
+                        authors: self.authors.join(", "),
+                        description: &self.description,
                     },
                 )?;
             }
@@ -276,4 +284,22 @@ pub(crate) fn collect_source_files() -> Result<Vec<String>> {
     found.retain(|str| !str.is_empty());
 
     Ok(found.iter().map(|s| s.to_string()).collect())
+}
+
+fn get_git_user() -> Result<String> {
+    Ok(format!(
+        "{} <{}>",
+        get_git_config_field("user.name")?,
+        get_git_config_field("user.email")?,
+    ))
+}
+
+fn get_git_config_field(field: &str) -> Result<String> {
+    let result = Command::new("git")
+        .arg("config")
+        .arg("--get")
+        .arg(field)
+        .output()?
+        .stdout;
+    Ok(std::str::from_utf8(&result)?.to_string())
 }
