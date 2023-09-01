@@ -163,13 +163,16 @@ interpreter or compiler is chosen based on the file extension.
 
 - `bash` script (`.sh`)
 - Python 3 script (`.py`)
+- Perl script (`.pl`)
 - C source file (`.c`)
 - C++ source file (`.cpp`)
 
-Obviously, the `bash` and `python3` interpreters must be present for their respective scripts to
-work. C/C++ build steps are compiled using the C11/C++17 standards.
+Obviously, the `bash`, `python3`, and `perl` interpreters must be present for
+their respective scripts to work. C/C++ build steps are compiled using the
+C11/C++17 standards.
 
-During their execution, these scripts/binaries have the following environment variables set.
+During their execution, these scripts/binaries have the following environment
+variables set.
 
 - `BARGE_BUILD_TARGET`: The build target, either `debug` or `release`.
 - `BARGE_PROJECT_NAME`: The name of the project.
