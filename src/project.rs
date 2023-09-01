@@ -54,12 +54,12 @@ pub(crate) struct Project {
 }
 
 impl Project {
-    pub(crate) fn new(name: &str) -> Result<Project> {
+    pub(crate) fn new(name: &str, project_type: ProjectType) -> Result<Project> {
         Ok(Project {
             name: name.to_string(),
             authors: vec![get_git_user()?],
             description: String::from(""),
-            project_type: ProjectType::Executable,
+            project_type,
             version: String::from("0.1.0"),
             c_standard: String::from("c11"),
             cpp_standard: String::from("c++17"),

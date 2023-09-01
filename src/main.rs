@@ -1,6 +1,6 @@
 use crate::makefile::BuildTarget;
 use crate::output::*;
-use crate::project::{collect_source_files, Project};
+use crate::project::{collect_source_files, Project, ProjectType};
 use crate::result::{BargeError, Result};
 use crate::utilities::attempt_remove_directory;
 use clap::App;
@@ -311,36 +311,31 @@ DOT_CLEANUP            = YES
     };
 }
 
-fn init(name: &str) -> Result<()> {
+fn init(name: &str, project_type: ProjectType, json: bool) -> Result<()> {
     let path = String::from(name);
 
     std::fs::create_dir(path.clone())?;
-    std::fs::create_dir(path.clone() + "/src")?;
-    std::fs::create_dir(path.clone() + "/include")?;
+    let project = Project::new(name, project_type)?;
+    let mut file = File::create(path.clone() + "/barge.json")?;
+    let content = serde_json::to_string_pretty(&project)?;
+    file.write_all(content.as_bytes())?;
+    file.write_all(b"\n")?;
 
-    {
-        let project = Project::new(name)?;
-        let mut file = File::create(path.clone() + "/barge.json")?;
-        let json = serde_json::to_string_pretty(&project)?;
-        file.write_all(json.as_bytes())?;
-        file.write_all(b"\n")?;
-    }
-    {
+    if !json {
+        std::fs::create_dir(path.clone() + "/src")?;
+        std::fs::create_dir(path.clone() + "/include")?;
         let mut file = File::create(path.clone() + "/src/main.cpp")?;
         file.write_all(hello_template!().as_bytes())?;
-    }
-    {
         let mut file = File::create(path.clone() + "/.gitignore")?;
         file.write_all("bin/*\nobj/*\ndoc/*\n".as_bytes())?;
-    }
-    {
         let mut file = File::create(path.clone() + "/Doxyfile")?;
         file.write_all(doxy_template!().as_bytes())?;
+        Command::new("git").arg("init").arg(name).output()?;
+        color_println!(GREEN, "Project {} successfully created", name);
+    } else {
+        color_println!(GREEN, "JSON file for project {} successfully created", name);
     }
 
-    Command::new("git").arg("init").arg(name).output()?;
-
-    color_println!(GREEN, "Project {} successfully created", name);
     Ok(())
 }
 
@@ -401,7 +396,9 @@ fn parse_and_run_subcommands() -> Result<()> {
         .subcommand(
             App::new("init")
                 .about("Initializes a new project")
-                .arg(clap::arg!(<NAME> "The name of the project")),
+                .arg(clap::arg!(--json "Create a barge.json file only in the target directory"))
+                .arg(clap::arg!(<NAME> "Name of the project"))
+                .arg(clap::arg!([TYPE] "Project type: executable, shared-lib, or static-lib")),
         )
         .subcommand(
             App::new("build")
@@ -428,10 +425,29 @@ fn parse_and_run_subcommands() -> Result<()> {
         .try_get_matches()?;
 
     if let Some(init_args) = matches.subcommand_matches("init") {
-        let name = init_args
+        let project_name = init_args
             .value_of("NAME")
             .ok_or(BargeError::NoneOption("Couldn't parse project name"))?;
-        return init(name);
+
+        let project_type = if let Some(project_type) = init_args.value_of("TYPE") {
+            match project_type {
+                "executable" => Ok(ProjectType::Executable),
+                "shared-lib" => Ok(ProjectType::SharedLibrary),
+                "shared-library" => Ok(ProjectType::SharedLibrary),
+                "static-lib" => Ok(ProjectType::StaticLibrary),
+                "static-library" => Ok(ProjectType::StaticLibrary),
+                &_ => Err(BargeError::InvalidValue("Invalid project type, valid choices are: executable, shared-lib(rary), static-lib(rary)"))
+            }
+        } else {
+            Ok(ProjectType::Executable)
+        };
+
+        let json = init_args.contains_id("json");
+        return if let Ok(project_type) = project_type {
+            init(project_name, project_type, json)
+        } else {
+            project_type.map(|_| ())
+        };
     }
 
     if !in_project_folder() {
