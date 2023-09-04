@@ -40,22 +40,22 @@ macro_rules! build_makefile_template {
 ASM=nasm
 ASMFLAGS=-f elf64
 ASMSRC=$(shell find src -type f -name '*.s')
-ASMOBJ=$(patsubst src/%.s,obj/{}/%.s.o,$(ASMSRC))
+ASMOBJ=$(patsubst src/%.s,build/{}/obj/%.s.o,$(ASMSRC))
 
 CC=clang
 CFLAGS={}
 CSRC=$(shell find src -type f -name '*.c')
-COBJ=$(patsubst src/%.c,obj/{}/%.c.o,$(CSRC))
+COBJ=$(patsubst src/%.c,build/{}/obj/%.c.o,$(CSRC))
 
 CXX=clang++
 CXXFLAGS={}
 CXXSRC=$(shell find src -type f -name '*.cpp')
-CXXOBJ=$(patsubst src/%.cpp,obj/{}/%.cpp.o,$(CXXSRC))
+CXXOBJ=$(patsubst src/%.cpp,build/{}/obj/%.cpp.o,$(CXXSRC))
 
 LDFLAGS={}
 
 NAME={}
-BINARY=bin/{}/$(NAME)
+BINARY=build/{}/$(NAME)
 SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC)
 OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ)
 
@@ -74,17 +74,17 @@ $(BINARY): $(COBJ) $(CXXOBJ) $(ASMOBJ)
 \t{}
 \t@printf '%sBuilt target %s%s\\n' $(BLUE) $(NAME) $(RESET)
 
-obj/{}/%.s.o: src/%.s
+build/{}/obj/%.s.o: src/%.s
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding assembly object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(ASM) $(ASMFLAGS) $< -o $@
 
-obj/{}/%.c.o: src/%.c
+build/{}/obj/%.c.o: src/%.c
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding C object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CC) $(CFLAGS) -c $< -o $@
 
-obj/{}/%.cpp.o: src/%.cpp
+build/{}/obj/%.cpp.o: src/%.cpp
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding C++ object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -252,7 +252,7 @@ fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<
         .iter()
         .map(|file| {
             let object = if let Some(name) = file.strip_prefix("src/") {
-                format!("obj/{}/{}.o", target.to_string(), name)
+                format!("build/{}/obj/{}.o", target.to_string(), name)
             } else {
                 String::from("")
             };

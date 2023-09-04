@@ -38,7 +38,7 @@ PROJECT_NAME           = $(BARGE_PROJECT_NAME)
 PROJECT_NUMBER         = $(BARGE_PROJECT_VERSION)
 PROJECT_BRIEF          = \"\"
 PROJECT_LOGO           =
-OUTPUT_DIRECTORY       = doc
+OUTPUT_DIRECTORY       = build/doc
 CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = NO
 OUTPUT_LANGUAGE        = English
@@ -327,7 +327,7 @@ fn init(name: &str, project_type: ProjectType, json: bool) -> Result<()> {
         let mut file = File::create(path.clone() + "/src/main.cpp")?;
         file.write_all(hello_template!().as_bytes())?;
         let mut file = File::create(path.clone() + "/.gitignore")?;
-        file.write_all("bin/*\nobj/*\ndoc/*\n".as_bytes())?;
+        file.write_all("build/*\n".as_bytes())?;
         let mut file = File::create(path.clone() + "/Doxyfile")?;
         file.write_all(doxy_template!().as_bytes())?;
         Command::new("git").arg("init").arg(name).output()?;
@@ -341,9 +341,7 @@ fn init(name: &str, project_type: ProjectType, json: bool) -> Result<()> {
 
 fn clean() -> Result<()> {
     color_println!(BLUE, "{}", "Removing build artifacts");
-    attempt_remove_directory("bin")?;
-    attempt_remove_directory("obj")?;
-    attempt_remove_directory("doc")?;
+    attempt_remove_directory("build")?;
     Ok(())
 }
 

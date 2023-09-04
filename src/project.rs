@@ -158,9 +158,7 @@ impl Project {
 
     pub(crate) fn rebuild(&self, target: BuildTarget) -> Result<()> {
         color_println!(BLUE, "{}", "Removing relevant build artifacts");
-        let path = format!("./bin/{}", target.to_string());
-        attempt_remove_directory(&path)?;
-        let path = format!("./obj/{}", target.to_string());
+        let path = format!("build/{}", target.to_string());
         attempt_remove_directory(&path)?;
         self.build(target)
     }
