@@ -100,7 +100,7 @@ following fields.
   The C++ standard used for the C source files, in a format like "c++14".
 - **`fortran_standard` (string)**:
   The FORTRAN standard used for the FORTRAN source files, in a format like
-  "f95".
+  "f2003".
 - **`external_libraries` (list of objects, optional)**:
   The list of external libraries to link with. This is a list of objects, which
   are represented in one of the following ways.
@@ -143,7 +143,7 @@ following fields.
     "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14",
-    "fortran_standard": "f95",
+    "fortran_standard": "f2003",
     "external_libraries": [
         {
             "type": "pkg_config",
@@ -177,7 +177,7 @@ following fields.
     "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14",
-    "fortran_standard": "f95"
+    "fortran_standard": "f2003"
 }
 ```
 
