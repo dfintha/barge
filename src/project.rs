@@ -193,7 +193,7 @@ impl Project {
 
         self.build(target)?;
 
-        let path = String::from("bin/") + &target.to_string() + "/" + &self.name;
+        let path = String::from("build/") + &target.to_string() + "/" + &self.name;
         color_println!(BLUE, "Running executable {}", &path);
         Command::new(&path).spawn()?.wait()?;
         Ok(())
