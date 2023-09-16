@@ -346,7 +346,7 @@ fn clean() -> Result<()> {
 }
 
 fn lines() -> Result<()> {
-    let sources = collect_source_files()?;
+    let sources = collect_source_files(false)?;
 
     let cat = Command::new("cat")
         .args(sources)

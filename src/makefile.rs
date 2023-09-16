@@ -1,5 +1,5 @@
 use crate::output::NO_COLOR;
-use crate::project::{Library, Project, ProjectType};
+use crate::project::{collect_source_files, Library, Project, ProjectType};
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
 use std::process::Command;
@@ -52,12 +52,17 @@ CXXFLAGS={}
 CXXSRC=$(shell find src -type f -name '*.cpp')
 CXXOBJ=$(patsubst src/%.cpp,build/{}/obj/%.cpp.o,$(CXXSRC))
 
+FORTRAN=gfortran
+FORTRANFLAGS={}
+FORTRANSRC=$(shell find src -type f -name '*.f90')
+FORTRANOBJ=$(patsubst src/%.f90,build/{}/obj/%.f90.o,$(FORTRANSRC))
+
 LDFLAGS={}
 
 NAME={}
 BINARY=build/{}/$(NAME)
-SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC)
-OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ)
+SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC) $(FORTRANSRC)
+OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ) $(FORTRANOBJ)
 
 {}
 
@@ -68,7 +73,7 @@ all: $(BINARY)
 {}
 {}
 
-$(BINARY): $(COBJ) $(CXXOBJ) $(ASMOBJ)
+$(BINARY): $(OBJECTS)
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%sLinking executable %s%s\\n' $(GREEN) $@ $(RESET)
 \t{}
@@ -88,6 +93,11 @@ build/{}/obj/%.cpp.o: src/%.cpp
 \t@mkdir -p $(shell dirname $@)
 \t@printf '%s%sBuilding C++ object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
 \t@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+build/{}/obj/%.f90.o: src/%.f90
+\t@mkdir -p $(shell dirname $@)
+\t@printf '%s%sBuilding FORTRAN object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
+\t@$(FORTRAN) $(FORTRANFLAGS) -Jbuild/{} -c $< -o $@
 "
     };
 }
@@ -119,29 +129,26 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         BuildTarget::Release => ("-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
-    let custom_cflags = if project.custom_cflags.is_some() {
-        project.custom_cflags.clone().ok_or(BargeError::NoneOption(
-            "Nonexistent optional value reported as existent",
-        ))?
+    let custom_cflags = if let Some(flags) = &project.custom_cflags {
+        flags.clone()
     } else {
         String::new()
     };
 
-    let custom_cxxflags = if project.custom_cxxflags.is_some() {
-        project.custom_cflags.clone().ok_or(BargeError::NoneOption(
-            "Nonexistent optional value reported as existent",
-        ))?
+    let custom_cxxflags = if let Some(flags) = &project.custom_cxxflags {
+        flags.clone()
     } else {
         String::new()
     };
 
-    let custom_ldflags = if project.custom_ldflags.is_some() {
-        project
-            .custom_ldflags
-            .clone()
-            .ok_or(BargeError::NoneOption(
-                "Nonexistent optional value reported as existent",
-            ))?
+    let custom_ldflags = if let Some(flags) = &project.custom_ldflags {
+        flags.clone()
+    } else {
+        String::new()
+    };
+
+    let custom_fortranflags = if let Some(flags) = &project.custom_fortranflags {
+        flags.clone()
     } else {
         String::new()
     };
@@ -179,7 +186,21 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         + &custom_cxxflags
         + pic_flag;
 
-    let ldflags = target_ldflags.to_owned() + " " + &library_ldflags + " " + &custom_ldflags;
+    let fortranflags =
+        String::from("-std=") + &project.fortran_standard + " " + &custom_fortranflags;
+
+    let libgfortran = collect_source_files(false)?
+        .iter()
+        .any(|source| source.ends_with(".f90"));
+    let libgfortran = if libgfortran { "-lgfortran" } else { "" };
+
+    let ldflags = target_ldflags.to_owned()
+        + " "
+        + &library_ldflags
+        + " "
+        + &custom_ldflags
+        + " "
+        + libgfortran;
 
     let name = match project.project_type {
         ProjectType::Executable => project.name.clone(),
@@ -216,6 +237,8 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         target.to_string(),
         cxxflags,
         target.to_string(),
+        fortranflags,
+        target.to_string(),
         ldflags,
         name,
         target.to_string(),
@@ -223,6 +246,8 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         c_dependencies,
         cpp_dependencies,
         link_command,
+        target.to_string(),
+        target.to_string(),
         target.to_string(),
         target.to_string(),
         target.to_string()

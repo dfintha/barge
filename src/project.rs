@@ -35,12 +35,15 @@ pub(crate) struct Project {
     pub version: String,
     pub c_standard: String,
     pub cpp_standard: String,
+    pub fortran_standard: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub external_libraries: Option<Vec<Library>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_cflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_cxxflags: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_fortranflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_ldflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -63,9 +66,11 @@ impl Project {
             version: String::from("0.1.0"),
             c_standard: String::from("c11"),
             cpp_standard: String::from("c++17"),
+            fortran_standard: String::from("f2003"),
             external_libraries: None,
             custom_cflags: None,
             custom_cxxflags: None,
+            custom_fortranflags: None,
             custom_ldflags: None,
             custom_makeopts: None,
             format_style: None,
@@ -200,7 +205,7 @@ impl Project {
     }
 
     pub(crate) fn format(&self) -> Result<()> {
-        let sources = collect_source_files()?;
+        let sources = collect_source_files(true)?;
         let style_arg = if let Some(format_style) = &self.format_style {
             "--style=".to_string() + &format_style
         } else {
@@ -255,7 +260,13 @@ fn generate_default_makeopts() -> Result<Vec<String>> {
     Ok(vec![format!("-j{}", parallel_jobs)])
 }
 
-pub(crate) fn collect_source_files() -> Result<Vec<String>> {
+pub(crate) fn collect_source_files(c_cpp_only: bool) -> Result<Vec<String>> {
+    let fortran_args = if !c_cpp_only {
+        vec!["-o", "-name", "*.f90"]
+    } else {
+        vec![]
+    };
+
     let find_src = Command::new("find")
         .arg("src")
         .args(vec!["-type", "f"])
@@ -264,6 +275,7 @@ pub(crate) fn collect_source_files() -> Result<Vec<String>> {
         .args(vec!["-o", "-name", "*.s"])
         .args(vec!["-o", "-name", "*.h"])
         .args(vec!["-o", "-name", "*.hpp"])
+        .args(fortran_args)
         .output()?
         .stdout;
 

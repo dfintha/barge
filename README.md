@@ -13,7 +13,8 @@ directories are supported.
 
 Source and header files shall have appropriate file extensions based on their
 type: `.c` for C source files, `.cpp` for C++ source files, `.s` for Assembly
-source files, `.h` for C header files, and `.hpp` for C++ header files.
+source files, `.f90` for FORTRAN source files, .h` for C header files, and
+`.hpp` for C++ header files.
 
 `barge` supports the [`NO_COLOR`](https://no-color.org/) environment variable:
 if it is set, no output will be colorized using ANSI terminal escape codes.
@@ -30,13 +31,17 @@ for proper functionality.
 - `coreutils (cat, wc)`: Used internally to count source code lines.
 - `findutils (find)`: Used internally to collect project files.
 - `make`: Used internally to perform various tasks on the project.
-- `nasm`: Used to compile Assembly source files.
+- `nasm`: Used to compile Assembly source files (if present).
 - `clang (clang, clang++, clang-tidy, clang-format)`: Used to compile C/C++
   source files, to link the executable, to run static analysis on the code,
   to automatically format the code, and to compile the dependency tree of C/C++
   object files.
 - `git`: Used to initialize a `git`˙repository on project creation.
 - `doxygen`: Used to generate HTML documentation for projects.
+- `gfortran`: Used to compile FORTRAN source files (if present).
+- `bash`: Used for pre- and post-build shell scripts (if present).
+- `python`: Used for pre- and post-build Python 3 scripts (if present).
+- `perl`: Used for pre- and post-build Perl scripts (if present).
 
 On Arch Linux, the following command installs the packages of all the required
 dependencies.
@@ -87,12 +92,15 @@ following fields.
 - **`project_type` (string)**:
   The type of the project. Can be either `executable`, `shared_library`, or
   `static_library`.
-- **`version (string)`**:
+- **`version` (string)**:
   The version of the project.
-- **`c_standard (string)`**:
+- **`c_standard` (string)**:
   The C standard used for the C source files, in a format like "c99".
-- **`cpp_standard (string)`**:
+- **`cpp_standard` (string)**:
   The C++ standard used for the C source files, in a format like "c++14".
+- **`fortran_standard` (string)**:
+  The FORTRAN standard used for the FORTRAN source files, in a format like
+  "f95".
 - **`external_libraries` (list of objects, optional)**:
   The list of external libraries to link with. This is a list of objects, which
   are represented in one of the following ways.
@@ -103,6 +111,9 @@ following fields.
   Adds the flags specified here to the C source file compilation command line.
 - **`custom_cxxflags` (string, optional)**:
   Adds the flags specified here to the C++ source file compilation command line.
+- **`custom_fortranflags` (string, optional)**:
+  Adds the flags specified here to the FORTRAN source file compilation command
+  line.
 - **`custom_ldflags` (string, optional)**:
   Adds the flags specified here to the executable linking command line.
 - **`custom_makeopts` (string, optional)**:
@@ -132,6 +143,7 @@ following fields.
     "version": "0.1.0",
     "c_standard": "c99",
     "cpp_standard": "c++14",
+    "fortran_standard": "f95",
     "external_libraries": [
         {
             "type": "pkg_config",
@@ -145,6 +157,7 @@ following fields.
     ],
     "custom_cflags": "-DNDEBUG",
     "custom_cxxflags": "-DNDEBUG",
+    "custom_fortranflags": "",
     "custom_ldflags": "-ggdb",
     "custom_makeopts": "-j2",
     "format_style": "Google",
@@ -163,7 +176,8 @@ following fields.
     "project_type": "executable",
     "version": "0.1.0",
     "c_standard": "c99",
-    "cpp_standard": "c++14"
+    "cpp_standard": "c++14",
+    "fortran_standard": "f95"
 }
 ```
 
