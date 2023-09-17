@@ -2,7 +2,7 @@ use crate::makefile::BuildTarget;
 use crate::output::*;
 use crate::project::{collect_source_files, Project, ProjectType};
 use crate::result::{BargeError, Result};
-use crate::utilities::attempt_remove_directory;
+use crate::utilities::{attempt_remove_directory, look_for_project_directory};
 use clap::App;
 use std::fs::File;
 use std::io::Write;
@@ -481,7 +481,17 @@ fn parse_and_run_subcommands() -> Result<()> {
 }
 
 fn main() -> Result<()> {
+    let project_dir = look_for_project_directory();
+    if let Err(BargeError::ProjectNotFound(s)) = project_dir {
+        color_eprintln!("{}", s);
+        std::process::exit(1);
+    }
+
+    let previous_dir = std::env::current_dir()?;
+    std::env::set_current_dir(project_dir?)?;
     let result = parse_and_run_subcommands();
+    std::env::set_current_dir(previous_dir)?;
+
     if let Err(error) = &result {
         match error {
             BargeError::StdIoError(e) => color_eprintln!("{}", e.to_string()),
@@ -491,6 +501,7 @@ fn main() -> Result<()> {
             BargeError::NoneOption(s) => color_eprintln!("{}", s),
             BargeError::InvalidValue(s) => color_eprintln!("{}", s),
             BargeError::FailedOperation(s) => color_eprintln!("{}", s),
+            BargeError::ProjectNotFound(s) => color_eprintln!("{}", s),
         };
         std::process::exit(1);
     }

@@ -9,6 +9,7 @@ pub(crate) enum BargeError {
     NoneOption(&'static str),
     InvalidValue(&'static str),
     FailedOperation(&'static str),
+    ProjectNotFound(&'static str),
 }
 
 impl From<std::io::Error> for BargeError {
