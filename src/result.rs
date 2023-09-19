@@ -1,3 +1,6 @@
+use crate::color_eprintln;
+use crate::NO_COLOR;
+use crate::RED;
 use std::convert::From;
 
 #[derive(Debug)]
@@ -37,3 +40,18 @@ impl From<clap::Error> for BargeError {
 }
 
 pub(crate) type Result<T> = std::result::Result<T, BargeError>;
+
+pub(crate) fn print_error<T>(result: &Result<T>) {
+    if let Err(error) = &result {
+        match error {
+            BargeError::StdIoError(e) => color_eprintln!("{}", e.to_string()),
+            BargeError::StdStrUtf8Error(e) => color_eprintln!("{}", e.to_string()),
+            BargeError::SerdeJsonError(e) => color_eprintln!("{}", e.to_string()),
+            BargeError::ClapError(e) => println!("{}", e),
+            BargeError::NoneOption(s) => color_eprintln!("{}", s),
+            BargeError::InvalidValue(s) => color_eprintln!("{}", s),
+            BargeError::FailedOperation(s) => color_eprintln!("{}", s),
+            BargeError::ProjectNotFound(s) => color_eprintln!("{}", s),
+        };
+    }
+}
