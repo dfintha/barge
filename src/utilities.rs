@@ -11,7 +11,7 @@ pub(crate) fn attempt_remove_directory(path: &str) -> Result<()> {
 
 pub(crate) fn look_for_project_directory() -> Result<PathBuf> {
     let mut current = std::env::current_dir()?;
-    while current.parent() != None {
+    while current.parent().is_some() {
         current.push("barge.json");
         if current.exists() {
             current.pop();
