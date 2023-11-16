@@ -1,0 +1,62 @@
+ASM=nasm
+ASMFLAGS=-f elf64
+ASMSRC=$(shell find src -type f -name '*.s')
+ASMOBJ=$(patsubst src/%.s,build/{}/obj/%.s.o,$(ASMSRC))
+
+CC={}
+CFLAGS={}
+CSRC=$(shell find src -type f -name '*.c')
+COBJ=$(patsubst src/%.c,build/{}/obj/%.c.o,$(CSRC))
+
+CXX={}
+CXXFLAGS={}
+CXXSRC=$(shell find src -type f -name '*.cpp')
+CXXOBJ=$(patsubst src/%.cpp,build/{}/obj/%.cpp.o,$(CXXSRC))
+
+FORTRAN={}
+FORTRANFLAGS={}
+FORTRANSRC=$(shell find src -type f -name '*.f90')
+FORTRANOBJ=$(patsubst src/%.f90,build/{}/obj/%.f90.o,$(FORTRANSRC))
+
+LD={}
+LDFLAGS={}
+
+NAME={}
+BINARY=build/{}/$(NAME)
+SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC) $(FORTRANSRC)
+OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ) $(FORTRANOBJ)
+
+{}
+
+.PHONY: all
+
+all: $(BINARY)
+
+{}
+{}
+
+$(BINARY): $(OBJECTS)
+	@mkdir -p $(shell dirname $@)
+	@printf '%sLinking executable %s%s\n' $(GREEN) $@ $(RESET)
+	{}
+	@printf '%sBuilt target %s%s\n' $(BLUE) $(NAME) $(RESET)
+
+build/{}/obj/%.s.o: src/%.s
+	@mkdir -p $(shell dirname $@)
+	@printf '%s%sBuilding assembly object %s.%s\n' $(GREEN) $(DIM) $@ $(RESET)
+	@$(ASM) $(ASMFLAGS) $< -o $@
+
+build/{}/obj/%.c.o: src/%.c
+	@mkdir -p $(shell dirname $@)
+	@printf '%s%sBuilding C object %s.%s\n' $(GREEN) $(DIM) $@ $(RESET)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+build/{}/obj/%.cpp.o: src/%.cpp
+	@mkdir -p $(shell dirname $@)
+	@printf '%s%sBuilding C++ object %s.%s\n' $(GREEN) $(DIM) $@ $(RESET)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+build/{}/obj/%.f90.o: src/%.f90
+	@mkdir -p $(shell dirname $@)
+	@printf '%s%sBuilding FORTRAN object %s.%s\n' $(GREEN) $(DIM) $@ $(RESET)
+	@$(FORTRAN) $(FORTRANFLAGS) -Jbuild/{} -c $< -o $@

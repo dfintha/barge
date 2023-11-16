@@ -48,91 +48,6 @@ macro_rules! get_field_or_default {
     };
 }
 
-macro_rules! build_makefile_template {
-    () => {
-        "
-ASM=nasm
-ASMFLAGS=-f elf64
-ASMSRC=$(shell find src -type f -name '*.s')
-ASMOBJ=$(patsubst src/%.s,build/{}/obj/%.s.o,$(ASMSRC))
-
-CC={}
-CFLAGS={}
-CSRC=$(shell find src -type f -name '*.c')
-COBJ=$(patsubst src/%.c,build/{}/obj/%.c.o,$(CSRC))
-
-CXX={}
-CXXFLAGS={}
-CXXSRC=$(shell find src -type f -name '*.cpp')
-CXXOBJ=$(patsubst src/%.cpp,build/{}/obj/%.cpp.o,$(CXXSRC))
-
-FORTRAN={}
-FORTRANFLAGS={}
-FORTRANSRC=$(shell find src -type f -name '*.f90')
-FORTRANOBJ=$(patsubst src/%.f90,build/{}/obj/%.f90.o,$(FORTRANSRC))
-
-LD={}
-LDFLAGS={}
-
-NAME={}
-BINARY=build/{}/$(NAME)
-SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC) $(FORTRANSRC)
-OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ) $(FORTRANOBJ)
-
-{}
-
-.PHONY: all
-
-all: $(BINARY)
-
-{}
-{}
-
-$(BINARY): $(OBJECTS)
-\t@mkdir -p $(shell dirname $@)
-\t@printf '%sLinking executable %s%s\\n' $(GREEN) $@ $(RESET)
-\t{}
-\t@printf '%sBuilt target %s%s\\n' $(BLUE) $(NAME) $(RESET)
-
-build/{}/obj/%.s.o: src/%.s
-\t@mkdir -p $(shell dirname $@)
-\t@printf '%s%sBuilding assembly object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
-\t@$(ASM) $(ASMFLAGS) $< -o $@
-
-build/{}/obj/%.c.o: src/%.c
-\t@mkdir -p $(shell dirname $@)
-\t@printf '%s%sBuilding C object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
-\t@$(CC) $(CFLAGS) -c $< -o $@
-
-build/{}/obj/%.cpp.o: src/%.cpp
-\t@mkdir -p $(shell dirname $@)
-\t@printf '%s%sBuilding C++ object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
-\t@$(CXX) $(CXXFLAGS) -c $< -o $@
-
-build/{}/obj/%.f90.o: src/%.f90
-\t@mkdir -p $(shell dirname $@)
-\t@printf '%s%sBuilding FORTRAN object %s.%s\\n' $(GREEN) $(DIM) $@ $(RESET)
-\t@$(FORTRAN) $(FORTRANFLAGS) -Jbuild/{} -c $< -o $@
-"
-    };
-}
-
-macro_rules! analyze_makefile_template {
-    () => {
-        "
-CSRC=$(shell find src -type f -name '*.c')
-CXXSRC=$(shell find src -type f -name '*.cpp')
-PFLAGS=-Iinclude -Isrc
-WFLAGS=-Wall -Wextra -pedantic -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion
-FLAGS=$(PFLAGS) $(WFLAGS)
-.PHONY: analyze
-analyze: $(CSRC) $(CXXSRC)
-\t@[ \"$(CSRC)\" != \"\" ] && clang-tidy $(CSRC) -- -std={} $(FLAGS) || true
-\t@[ \"$(CXXSRC)\" != \"\" ] && clang-tidy $(CXXSRC) -- -std={} $(FLAGS) || true
-"
-    };
-}
-
 pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) -> Result<String> {
     let common_cflags = "-Wall -Wextra -Wpedantic -Wshadow -Wconversion \
                          -Wdouble-promotion -Wformat=2 -Iinclude -Isrc";
@@ -238,7 +153,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     };
 
     let result = format!(
-        build_makefile_template!(),
+        include_str!("template-makefile-build.in"),
         target.to_string(),
         c_compiler,
         cflags,
@@ -270,7 +185,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 pub(crate) fn generate_analyze_makefile(project: &Project) -> Result<String> {
     let c_std = get_field_or_default!(project.c_standard, DEFAULT_C_STANDARD);
     let cpp_std = get_field_or_default!(project.cpp_standard, DEFAULT_CPP_STANDARD);
-    Ok(format!(analyze_makefile_template!(), c_std, cpp_std))
+    Ok(format!(include_str!("template-makefile-analyze.in"), c_std, cpp_std))
 }
 
 fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<String> {

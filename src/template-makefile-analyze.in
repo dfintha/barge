@@ -1,0 +1,11 @@
+CSRC=$(shell find src -type f -name '*.c')
+CXXSRC=$(shell find src -type f -name '*.cpp')
+PFLAGS=-Iinclude -Isrc
+WFLAGS=-Wall -Wextra -pedantic -Wshadow -Wdouble-promotion -Wformat=2 -Wconversion
+FLAGS=$(PFLAGS) $(WFLAGS)
+
+.PHONY: analyze
+
+analyze: $(CSRC) $(CXXSRC)
+	@[ \"$(CSRC)\" != \"\" ] && clang-tidy $(CSRC) -- -std={} $(FLAGS) || true
+	@[ \"$(CXXSRC)\" != \"\" ] && clang-tidy $(CXXSRC) -- -std={} $(FLAGS) || true
