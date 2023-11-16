@@ -1,7 +1,8 @@
 use crate::output::NO_COLOR;
 use crate::project::{
     collect_source_files, Library, Project, ProjectType, Toolset, DEFAULT_CPP_STANDARD,
-    DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD,
+    DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_CXXFLAGS, DEFAULT_CUSTOM_FORTRANFLAGS,
+    DEFAULT_CUSTOM_LDFLAGS, DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD, DEFAULT_TOOLSET,
 };
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
@@ -35,6 +36,16 @@ impl TryFrom<&str> for BuildTarget {
             Err(BargeError::InvalidValue("Invalid target specified"))
         }
     }
+}
+
+macro_rules! get_field_or_default {
+    ($field:expr, $default:ident) => {
+        if let Some(field) = &$field {
+            field
+        } else {
+            $default
+        }
+    };
 }
 
 macro_rules! build_makefile_template {
@@ -136,34 +147,19 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let toolset = if let Some(toolset) = &project.toolset {
         toolset
     } else {
-        &Toolset::Llvm
+        DEFAULT_TOOLSET
     };
+
+    let c_std = get_field_or_default!(project.c_standard, DEFAULT_C_STANDARD);
+    let cpp_std = get_field_or_default!(project.cpp_standard, DEFAULT_CPP_STANDARD);
+    let fortran_std = get_field_or_default!(project.fortran_standard, DEFAULT_FORTRAN_STANDARD);
+    let custom_cflags = get_field_or_default!(project.custom_cflags, DEFAULT_CUSTOM_CFLAGS);
+    let custom_cxxflags = get_field_or_default!(project.custom_cxxflags, DEFAULT_CUSTOM_CXXFLAGS);
+    let custom_ldflags = get_field_or_default!(project.custom_ldflags, DEFAULT_CUSTOM_LDFLAGS);
+    let custom_fortranflags =
+        get_field_or_default!(project.custom_fortranflags, DEFAULT_CUSTOM_FORTRANFLAGS);
 
     let (c_compiler, cpp_compiler, fortran_compiler, linker, _) = get_toolset_executables(toolset);
-
-    let custom_cflags = if let Some(flags) = &project.custom_cflags {
-        flags.clone()
-    } else {
-        String::new()
-    };
-
-    let custom_cxxflags = if let Some(flags) = &project.custom_cxxflags {
-        flags.clone()
-    } else {
-        String::new()
-    };
-
-    let custom_ldflags = if let Some(flags) = &project.custom_ldflags {
-        flags.clone()
-    } else {
-        String::new()
-    };
-
-    let custom_fortranflags = if let Some(flags) = &project.custom_fortranflags {
-        flags.clone()
-    } else {
-        String::new()
-    };
 
     let pic_flag = if project.project_type != ProjectType::Executable {
         "-fPIC"
@@ -174,24 +170,6 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let c_dependencies = get_dependencies_for_project(target, "c")?;
     let cpp_dependencies = get_dependencies_for_project(target, "cpp")?;
 
-    let c_std = if let Some(c_standard) = &project.c_standard {
-        c_standard
-    } else {
-        DEFAULT_C_STANDARD
-    };
-
-    let cpp_std = if let Some(cpp_standard) = &project.cpp_standard {
-        cpp_standard
-    } else {
-        DEFAULT_CPP_STANDARD
-    };
-
-    let fortran_std = if let Some(fortran_standard) = &project.fortran_standard {
-        fortran_standard
-    } else {
-        DEFAULT_FORTRAN_STANDARD
-    };
-
     let cflags = String::from("-std=")
         + c_std
         + " "
@@ -201,7 +179,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         + " "
         + target_cflags
         + " "
-        + &custom_cflags
+        + custom_cflags
         + pic_flag;
 
     let cxxflags = String::from("-std=")
@@ -213,10 +191,10 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         + " "
         + target_cflags
         + " "
-        + &custom_cxxflags
+        + custom_cxxflags
         + pic_flag;
 
-    let fortranflags = String::from("-std=") + fortran_std + " " + &custom_fortranflags;
+    let fortranflags = String::from("-std=") + fortran_std + " " + custom_fortranflags;
 
     let libgfortran = collect_source_files(false)?
         .iter()
@@ -227,7 +205,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         + " "
         + &library_ldflags
         + " "
-        + &custom_ldflags
+        + custom_ldflags
         + " "
         + libgfortran;
 
@@ -290,18 +268,8 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 }
 
 pub(crate) fn generate_analyze_makefile(project: &Project) -> Result<String> {
-    let c_std = if let Some(c_standard) = &project.c_standard {
-        c_standard
-    } else {
-        DEFAULT_C_STANDARD
-    };
-
-    let cpp_std = if let Some(cpp_standard) = &project.cpp_standard {
-        cpp_standard
-    } else {
-        DEFAULT_CPP_STANDARD
-    };
-
+    let c_std = get_field_or_default!(project.c_standard, DEFAULT_C_STANDARD);
+    let cpp_std = get_field_or_default!(project.cpp_standard, DEFAULT_CPP_STANDARD);
     Ok(format!(analyze_makefile_template!(), c_std, cpp_std))
 }
 

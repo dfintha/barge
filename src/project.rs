@@ -13,6 +13,11 @@ use sysinfo::SystemExt;
 pub const DEFAULT_C_STANDARD: &str = "c11";
 pub const DEFAULT_CPP_STANDARD: &str = "c++17";
 pub const DEFAULT_FORTRAN_STANDARD: &str = "f2003";
+pub const DEFAULT_TOOLSET: &Toolset = &Toolset::Llvm;
+pub const DEFAULT_CUSTOM_CFLAGS: &str = "";
+pub const DEFAULT_CUSTOM_CXXFLAGS: &str = "";
+pub const DEFAULT_CUSTOM_FORTRANFLAGS: &str = "";
+pub const DEFAULT_CUSTOM_LDFLAGS: &str = "";
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
