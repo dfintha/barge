@@ -1,5 +1,8 @@
 use crate::output::NO_COLOR;
-use crate::project::{collect_source_files, Library, Project, ProjectType};
+use crate::project::{
+    collect_source_files, Library, Project, ProjectType, Toolset, DEFAULT_CPP_STANDARD,
+    DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD,
+};
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
 use std::process::Command;
@@ -42,21 +45,22 @@ ASMFLAGS=-f elf64
 ASMSRC=$(shell find src -type f -name '*.s')
 ASMOBJ=$(patsubst src/%.s,build/{}/obj/%.s.o,$(ASMSRC))
 
-CC=clang
+CC={}
 CFLAGS={}
 CSRC=$(shell find src -type f -name '*.c')
 COBJ=$(patsubst src/%.c,build/{}/obj/%.c.o,$(CSRC))
 
-CXX=clang++
+CXX={}
 CXXFLAGS={}
 CXXSRC=$(shell find src -type f -name '*.cpp')
 CXXOBJ=$(patsubst src/%.cpp,build/{}/obj/%.cpp.o,$(CXXSRC))
 
-FORTRAN=gfortran
+FORTRAN={}
 FORTRANFLAGS={}
 FORTRANSRC=$(shell find src -type f -name '*.f90')
 FORTRANOBJ=$(patsubst src/%.f90,build/{}/obj/%.f90.o,$(FORTRANSRC))
 
+LD={}
 LDFLAGS={}
 
 NAME={}
@@ -129,6 +133,14 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         BuildTarget::Release => ("-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
+    let toolset = if let Some(toolset) = &project.toolset {
+        toolset
+    } else {
+        &Toolset::Llvm
+    };
+
+    let (c_compiler, cpp_compiler, fortran_compiler, linker, _) = get_toolset_executables(toolset);
+
     let custom_cflags = if let Some(flags) = &project.custom_cflags {
         flags.clone()
     } else {
@@ -162,8 +174,26 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let c_dependencies = get_dependencies_for_project(target, "c")?;
     let cpp_dependencies = get_dependencies_for_project(target, "cpp")?;
 
+    let c_std = if let Some(c_standard) = &project.c_standard {
+        c_standard
+    } else {
+        DEFAULT_C_STANDARD
+    };
+
+    let cpp_std = if let Some(cpp_standard) = &project.cpp_standard {
+        cpp_standard
+    } else {
+        DEFAULT_CPP_STANDARD
+    };
+
+    let fortran_std = if let Some(fortran_standard) = &project.fortran_standard {
+        fortran_standard
+    } else {
+        DEFAULT_FORTRAN_STANDARD
+    };
+
     let cflags = String::from("-std=")
-        + &project.c_standard
+        + c_std
         + " "
         + common_cflags
         + " "
@@ -175,7 +205,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         + pic_flag;
 
     let cxxflags = String::from("-std=")
-        + &project.cpp_standard
+        + cpp_std
         + " "
         + common_cflags
         + " "
@@ -186,8 +216,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         + &custom_cxxflags
         + pic_flag;
 
-    let fortranflags =
-        String::from("-std=") + &project.fortran_standard + " " + &custom_fortranflags;
+    let fortranflags = String::from("-std=") + fortran_std + " " + &custom_fortranflags;
 
     let libgfortran = collect_source_files(false)?
         .iter()
@@ -233,12 +262,16 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let result = format!(
         build_makefile_template!(),
         target.to_string(),
+        c_compiler,
         cflags,
         target.to_string(),
+        cpp_compiler,
         cxxflags,
         target.to_string(),
+        fortran_compiler,
         fortranflags,
         target.to_string(),
+        linker,
         ldflags,
         name,
         target.to_string(),
@@ -257,10 +290,19 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 }
 
 pub(crate) fn generate_analyze_makefile(project: &Project) -> Result<String> {
-    Ok(format!(
-        analyze_makefile_template!(),
-        project.c_standard, project.cpp_standard
-    ))
+    let c_std = if let Some(c_standard) = &project.c_standard {
+        c_standard
+    } else {
+        DEFAULT_C_STANDARD
+    };
+
+    let cpp_std = if let Some(cpp_standard) = &project.cpp_standard {
+        cpp_standard
+    } else {
+        DEFAULT_CPP_STANDARD
+    };
+
+    Ok(format!(analyze_makefile_template!(), c_std, cpp_std))
 }
 
 fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<String> {
@@ -333,4 +375,19 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> Result<(String, Stri
     }
 
     Ok((library_cflags, library_ldflags))
+}
+
+fn get_toolset_executables(
+    toolset: &Toolset,
+) -> (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+) {
+    match toolset {
+        Toolset::Gnu => ("gcc", "g++", "gfortran", "ld", "gdb"),
+        Toolset::Llvm => ("clang", "clang++", "flang", "lld", "lldb"),
+    }
 }

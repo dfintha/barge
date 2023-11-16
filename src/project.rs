@@ -10,6 +10,17 @@ use std::process::{Command, Stdio};
 use std::time::Instant;
 use sysinfo::SystemExt;
 
+pub const DEFAULT_C_STANDARD: &str = "c11";
+pub const DEFAULT_CPP_STANDARD: &str = "c++17";
+pub const DEFAULT_FORTRAN_STANDARD: &str = "f2003";
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Toolset {
+    Gnu,
+    Llvm,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
@@ -33,9 +44,14 @@ pub(crate) struct Project {
     pub description: String,
     pub project_type: ProjectType,
     pub version: String,
-    pub c_standard: String,
-    pub cpp_standard: String,
-    pub fortran_standard: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub toolset: Option<Toolset>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub c_standard: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpp_standard: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fortran_standard: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub external_libraries: Option<Vec<Library>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -64,9 +80,10 @@ impl Project {
             description: String::from(""),
             project_type,
             version: String::from("0.1.0"),
-            c_standard: String::from("c11"),
-            cpp_standard: String::from("c++17"),
-            fortran_standard: String::from("f2003"),
+            toolset: None,
+            c_standard: None,
+            cpp_standard: None,
+            fortran_standard: None,
             external_libraries: None,
             custom_cflags: None,
             custom_cxxflags: None,

@@ -94,13 +94,20 @@ following fields.
   `static_library`.
 - **`version` (string)**:
   The version of the project.
-- **`c_standard` (string)**:
-  The C standard used for the C source files, in a format like "c99".
-- **`cpp_standard` (string)**:
-  The C++ standard used for the C source files, in a format like "c++14".
-- **`fortran_standard` (string)**:
+- **`toolset` (string)**:
+  The toolset to be used by the project. The two possible choices are "gnu" (in
+  this case `gcc`, `g++`, `gfortran`, and `ld` will be used) and "llvm" (in this
+  case `clang`˛, `clang++`, `flang`, and `lld` will be used). The default is
+  "llvm".
+- **`c_standard` (string, optional)**:
+  The C standard used for the C source files, in a format like "c99". The
+  default is "c11".
+- **`cpp_standard` (string, optional)**:
+  The C++ standard used for the C source files, in a format like "c++14". The
+  default is "c++17".
+- **`fortran_standard` (string, optional)**:
   The FORTRAN standard used for the FORTRAN source files, in a format like
-  "f2003".
+  "f2003". The default is "f2003".
 - **`external_libraries` (list of objects, optional)**:
   The list of external libraries to link with. This is a list of objects, which
   are represented in one of the following ways.
@@ -126,6 +133,7 @@ following fields.
   the default is Google. The supported format styles are the ones supported by
   `clang-format`. If `file` is given, `clang-format` will look for a
   `.clang-format` file in parent directories relative to the given source file.
+  The default is "Google".
 - **`pre_build_step` (string, optional)**:
   A script or C/C++ source file to execute before starting a build.
 - **`post_build_step` (string, optional)**:
@@ -141,6 +149,7 @@ following fields.
     "description": "An awesome example project.",
     "project_type": "executable",
     "version": "0.1.0",
+    "toolset": "gnu",
     "c_standard": "c99",
     "cpp_standard": "c++14",
     "fortran_standard": "f2003",
@@ -174,10 +183,7 @@ following fields.
     "authors": ["Somebody <somebody@example.org>"],
     "description": "An awesome example project.",
     "project_type": "executable",
-    "version": "0.1.0",
-    "c_standard": "c99",
-    "cpp_standard": "c++14",
-    "fortran_standard": "f2003"
+    "version": "0.1.0"
 }
 ```
 
