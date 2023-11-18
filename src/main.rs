@@ -3,7 +3,6 @@ use crate::output::*;
 use crate::project::{collect_source_files, Project, ProjectType};
 use crate::result::{print_error, BargeError, Result};
 use crate::utilities::{attempt_remove_directory, look_for_project_directory};
-use clap::App;
 use std::fs::File;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -81,57 +80,65 @@ fn in_project_folder() -> bool {
     }
 }
 
-fn parse_build_target(target: Option<&str>) -> Result<BuildTarget> {
+fn parse_build_target(target: Option<&String>) -> Result<BuildTarget> {
     if let Some(target) = target {
-        BuildTarget::try_from(target)
+        BuildTarget::try_from(target.as_str())
     } else {
         Ok(BuildTarget::Debug)
     }
 }
 
 fn parse_and_run_subcommands() -> Result<()> {
-    let matches = App::new(env!("CARGO_PKG_NAME"))
+    let matches = clap::Command::new(env!("CARGO_PKG_NAME"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .version(env!("CARGO_PKG_VERSION"))
         .about("A simple tool for small assembly/C/C++ projects")
-        .setting(clap::AppSettings::SubcommandRequired)
+        .subcommand_required(true)
         .subcommand(
-            App::new("init")
+            clap::Command::new("init")
                 .about("Initializes a new project")
                 .arg(clap::arg!(--json "Create a barge.json file only in the target directory"))
                 .arg(clap::arg!(<NAME> "Name of the project"))
                 .arg(clap::arg!([TYPE] "Project type: executable, shared-lib, or static-lib")),
         )
         .subcommand(
-            App::new("build")
+            clap::Command::new("build")
                 .alias("b")
                 .about("Builds the current project")
                 .arg(clap::arg!([TARGET] "Build target (debug or release)")),
         )
         .subcommand(
-            App::new("rebuild")
+            clap::Command::new("rebuild")
                 .about("Removes build artifacts and builds the current project")
                 .arg(clap::arg!([TARGET] "Build target (debug or release)")),
         )
         .subcommand(
-            App::new("run")
+            clap::Command::new("run")
                 .alias("r")
                 .about("Builds and runs the current project (binary projects only)")
-                .arg(clap::arg!([TARGET] "Build target (debug or release)")),
+                .arg(clap::arg!([TARGET] "Build target (debug or release)"))
+                .arg(
+                    clap::Arg::new("args")
+                        .allow_hyphen_values(true)
+                        .last(true)
+                        .raw(true),
+                ),
         )
-        .subcommand(App::new("clean").about("Removes build artifacts"))
-        .subcommand(App::new("lines").about("Counts the source code lines in the project"))
-        .subcommand(App::new("analyze").about("Runs static analysis on the project"))
-        .subcommand(App::new("format").about("Formats the source code of the project"))
-        .subcommand(App::new("doc").about("Generates HTML documentation for the project"))
+        .subcommand(clap::Command::new("clean").about("Removes build artifacts"))
+        .subcommand(
+            clap::Command::new("lines").about("Counts the source code lines in the project"),
+        )
+        .subcommand(clap::Command::new("analyze").about("Runs static analysis on the project"))
+        .subcommand(clap::Command::new("format").about("Formats the source code of the project"))
+        .subcommand(clap::Command::new("doc").about("Generates HTML documentation for the project"))
         .try_get_matches()?;
 
     if let Some(init_args) = matches.subcommand_matches("init") {
-        let project_name = init_args
-            .value_of("NAME")
+        let project_name = *init_args
+            .get_one("NAME")
             .ok_or(BargeError::NoneOption("Couldn't parse project name"))?;
 
-        let project_type = if let Some(project_type) = init_args.value_of("TYPE") {
+        let project_type = if let Some(&project_type) = (*init_args).get_one("TYPE") {
             match project_type {
                 "executable" => Ok(ProjectType::Executable),
                 "shared-lib" => Ok(ProjectType::SharedLibrary),
@@ -161,14 +168,19 @@ fn parse_and_run_subcommands() -> Result<()> {
 
     let project = Project::load("barge.json")?;
     if let Some(build_args) = matches.subcommand_matches("build") {
-        let target = parse_build_target(build_args.value_of("TARGET"))?;
+        let target = parse_build_target(build_args.get_one::<String>("TARGET"))?;
         project.build(target)?;
     } else if let Some(rebuild_args) = matches.subcommand_matches("rebuild") {
-        let target = parse_build_target(rebuild_args.value_of("TARGET"))?;
+        let target = parse_build_target(rebuild_args.get_one::<String>("TARGET"))?;
         project.rebuild(target)?;
     } else if let Some(run_args) = matches.subcommand_matches("run") {
-        let target = parse_build_target(run_args.value_of("TARGET"))?;
-        project.run(target)?;
+        let target = parse_build_target(run_args.get_one::<String>("TARGET"))?;
+        let arguments = if let Some(args) = run_args.get_many::<String>("args") {
+            args.cloned().collect()
+        } else {
+            vec![]
+        };
+        project.run(target, arguments)?;
     } else if matches.subcommand_matches("clean").is_some() {
         clean()?;
     } else if matches.subcommand_matches("lines").is_some() {

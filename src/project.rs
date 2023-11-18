@@ -212,7 +212,7 @@ impl Project {
         Ok(())
     }
 
-    pub(crate) fn run(&self, target: BuildTarget) -> Result<()> {
+    pub(crate) fn run(&self, target: BuildTarget, arguments: Vec<String>) -> Result<()> {
         if self.project_type != ProjectType::Executable {
             color_eprintln!("Only binary projects can be run");
             return Ok(());
@@ -222,7 +222,7 @@ impl Project {
 
         let path = String::from("build/") + &target.to_string() + "/" + &self.name;
         color_println!(BLUE, "Running executable {}", &path);
-        Command::new(&path).spawn()?.wait()?;
+        Command::new(&path).args(arguments).spawn()?.wait()?;
         Ok(())
     }
 
