@@ -111,18 +111,19 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 
     let fortranflags = String::from("-std=") + fortran_std + " " + custom_fortranflags;
 
-    let libgfortran = collect_source_files(false)?
+    let has_fortran_sources = collect_source_files(false)?
         .iter()
         .any(|source| source.ends_with(".f90"));
-    let libgfortran = if libgfortran { "-lgfortran" } else { "" };
+    let fortran_ldflags = if has_fortran_sources {
+        "-lgfortran"
+    } else {
+        ""
+    };
 
-    let ldflags = target_ldflags.to_owned()
-        + " "
-        + &library_ldflags
-        + " "
-        + custom_ldflags
-        + " "
-        + libgfortran;
+    let ldflags = format!(
+        "{} {} {} {}",
+        target_ldflags, library_ldflags, custom_ldflags, fortran_ldflags
+    );
 
     let name = match project.project_type {
         ProjectType::Executable => project.name.clone(),
@@ -185,7 +186,10 @@ DIM=`tput dim`
 pub(crate) fn generate_analyze_makefile(project: &Project) -> Result<String> {
     let c_std = get_field_or_default!(project.c_standard, DEFAULT_C_STANDARD);
     let cpp_std = get_field_or_default!(project.cpp_standard, DEFAULT_CPP_STANDARD);
-    Ok(format!(include_str!("template-makefile-analyze.in"), c_std, cpp_std))
+    Ok(format!(
+        include_str!("template-makefile-analyze.in"),
+        c_std, cpp_std
+    ))
 }
 
 fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<String> {
@@ -220,7 +224,6 @@ fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<
         .map(|result| String::from_utf8(result.stdout))
         .filter_map(|result| result.ok())
         .collect::<Vec<_>>();
-
 
     Ok(dependencies.join("").trim_end().to_string())
 }
@@ -272,6 +275,6 @@ fn get_toolset_executables(
 ) {
     match toolset {
         Toolset::Gnu => ("gcc", "g++", "gfortran", "ld", "gdb"),
-        Toolset::Llvm => ("clang", "clang++", "flang", "lld", "lldb"),
+        Toolset::Llvm => ("clang", "clang++", "gfortran", "lld", "lldb"),
     }
 }

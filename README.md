@@ -43,13 +43,10 @@ for proper functionality.
 - `clang (clang, clang++)`: Used to compile C/C++ source files and to compile
   the dependency tree of C/C++ object files, if the LLVM toolset is chosen.
 - `lld`: Used to link the resulting binary, if the LLVM toolset is chosen.
-- `flang`: Used to compile FORTRAN source files (if the LLVM toolset is
-  chosen).
 - `gcc (gcc, g++)`: Used to compile C/C++ source files and to compile
   the dependency tree of C/C++ object files, if the GNU toolset is chosen.
 - `ld`: Used to link the resulting binary, if the GNU toolset is chosen.
-- `gfortran`: Used to compile FORTRAN source files (if the GNU toolset is
-  chosen).
+- `gfortran`: Used to compile FORTRAN source files.
 - `doxygen`: Used to generate HTML documentation for projects.
 - `bash`: Used for pre- and post-build shell scripts (if present).
 - `python`: Used for pre- and post-build Python 3 scripts (if present).
