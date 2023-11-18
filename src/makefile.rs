@@ -138,17 +138,17 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 
     let colorization = if *NO_COLOR {
         "
-        GREEN=''
-        BLUE=''
-        RESET=''
-        DIM=''
+GREEN=''
+BLUE=''
+RESET=''
+DIM=''
         "
     } else {
         "
-        GREEN=`tput setaf 2``tput bold`
-        BLUE=`tput setaf 4``tput bold`
-        RESET=`tput sgr0`
-        DIM=`tput dim`
+GREEN=`tput setaf 2``tput bold`
+BLUE=`tput setaf 4``tput bold`
+RESET=`tput sgr0`
+DIM=`tput dim`
         "
     };
 
@@ -221,7 +221,8 @@ fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<
         .filter_map(|result| result.ok())
         .collect::<Vec<_>>();
 
-    Ok(dependencies.join(""))
+
+    Ok(dependencies.join("").trim_end().to_string())
 }
 
 fn call_pkg_config(name: &str, mode: &str) -> Result<String> {
