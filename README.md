@@ -23,30 +23,37 @@ if it is set, no output will be colorized using ANSI terminal escape codes.
 As such, changes to the project file format and/or usage can happen
 frequently.**
 
-## Requirements
+## Dependencies
 
 Internally, `barge` uses the following external software, which are required
 for proper functionality.
 
+### Required
+
 - `coreutils (cat, wc)`: Used internally to count source code lines.
 - `findutils (find)`: Used internally to collect project files.
 - `make`: Used internally to perform various tasks on the project.
-- `nasm`: Used to compile Assembly source files (if present).
-- `clang (clang, clang++, clang-tidy, clang-format)`: Used to compile C/C++
-  source files, to link the executable, to run static analysis on the code,
-  to automatically format the code, and to compile the dependency tree of C/C++
-  object files.
 - `git`: Used to initialize a `git`˙repository on project creation.
+
+### Project-dependent
+
+- `nasm`: Used to compile assembly source files.
+- `clang-tidy`: Used to perform static analysis on C/C++ sources.
+- `clang-format`: Used to perform automatic formatting on C/C++ sources.
+- `clang (clang, clang++)`: Used to compile C/C++ source files and to compile
+  the dependency tree of C/C++ object files, if the LLVM toolset is chosen.
+- `lld`: Used to link the resulting binary, if the LLVM toolset is chosen.
+- `flang`: Used to compile FORTRAN source files (if the LLVM toolset is
+  chosen).
+- `gcc (gcc, g++)`: Used to compile C/C++ source files and to compile
+  the dependency tree of C/C++ object files, if the GNU toolset is chosen.
+- `ld`: Used to link the resulting binary, if the GNU toolset is chosen.
+- `gfortran`: Used to compile FORTRAN source files (if the GNU toolset is
+  chosen).
 - `doxygen`: Used to generate HTML documentation for projects.
-- `gfortran`: Used to compile FORTRAN source files (if present).
 - `bash`: Used for pre- and post-build shell scripts (if present).
 - `python`: Used for pre- and post-build Python 3 scripts (if present).
 - `perl`: Used for pre- and post-build Perl scripts (if present).
-
-On Arch Linux, the following command installs the packages of all the required
-dependencies.
-
-`pacman -S coreutils findutils make nasm clang git doxygen`
 
 ## Subcommands
 
