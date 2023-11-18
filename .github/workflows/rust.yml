@@ -16,7 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
+    - name: Build the project
       run: cargo build --verbose
-    - name: Run tests
+    - name: Perform static analysis
+      run: cargo clippy --verbose
+    - name: Run unit tests
       run: cargo test --verbose
