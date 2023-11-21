@@ -19,7 +19,7 @@ pub const DEFAULT_CUSTOM_CXXFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_FORTRANFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_LDFLAGS: &str = "";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum Toolset {
     Gnu,
@@ -226,6 +226,43 @@ impl Project {
         Ok(())
     }
 
+    pub(crate) fn debug(&self, target: BuildTarget, arguments: Vec<String>) -> Result<()> {
+        if self.project_type != ProjectType::Executable {
+            color_eprintln!("Only binary projects can be run");
+            return Ok(());
+        }
+
+        self.build(target)?;
+
+        let toolset = if let Some(toolset) = &self.toolset {
+            toolset
+        } else {
+            DEFAULT_TOOLSET
+        };
+        let debugger = get_debugger(toolset);
+
+        let path = String::from("build/") + &target.to_string() + "/" + &self.name;
+        color_println!(BLUE, "Running executable {} in the debugger", &path);
+
+        if toolset == &Toolset::Gnu {
+            Command::new(debugger)
+                .arg("--args")
+                .arg(&path)
+                .args(arguments)
+                .spawn()?
+                .wait()?;
+        } else {
+            Command::new(debugger)
+                .arg(&path)
+                .arg("--")
+                .args(arguments)
+                .spawn()?
+                .wait()?;
+        }
+
+        Ok(())
+    }
+
     pub(crate) fn format(&self) -> Result<()> {
         let sources = collect_source_files(true)?;
         let style_arg = if let Some(format_style) = &self.format_style {
@@ -334,4 +371,11 @@ fn get_git_config_field(field: &str) -> Result<String> {
         .output()?
         .stdout;
     Ok(std::str::from_utf8(&result)?.to_string())
+}
+
+fn get_debugger(toolset: &Toolset) -> &'static str {
+    match toolset {
+        Toolset::Gnu => "gdb",
+        Toolset::Llvm => "lldb",
+    }
 }

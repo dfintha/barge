@@ -124,6 +124,18 @@ fn parse_and_run_subcommands() -> Result<()> {
                         .raw(true),
                 ),
         )
+        .subcommand(
+            clap::Command::new("debug")
+                .alias("d")
+                .about("Builds and runs the current project in the debugger (binary projects only)")
+                .arg(clap::arg!([TARGET] "Build target (debug or release)"))
+                .arg(
+                    clap::Arg::new("args")
+                        .allow_hyphen_values(true)
+                        .last(true)
+                        .raw(true),
+                ),
+        )
         .subcommand(clap::Command::new("clean").about("Removes build artifacts"))
         .subcommand(
             clap::Command::new("lines").about("Counts the source code lines in the project"),
@@ -181,6 +193,14 @@ fn parse_and_run_subcommands() -> Result<()> {
             vec![]
         };
         project.run(target, arguments)?;
+    } else if let Some(debug_args) = matches.subcommand_matches("debug") {
+        let target = parse_build_target(debug_args.get_one::<String>("TARGET"))?;
+        let arguments = if let Some(args) = debug_args.get_many::<String>("args") {
+            args.cloned().collect()
+        } else {
+            vec![]
+        };
+        project.debug(target, arguments)?;
     } else if matches.subcommand_matches("clean").is_some() {
         clean()?;
     } else if matches.subcommand_matches("lines").is_some() {

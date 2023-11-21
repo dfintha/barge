@@ -42,9 +42,11 @@ for proper functionality.
 - `clang-format`: Used to perform automatic formatting on C/C++ sources.
 - `clang (clang, clang++)`: Used to compile C/C++ source files and to compile
   the dependency tree of C/C++ object files, if the LLVM toolset is chosen.
+- `lldb`: Used to debug executable binaries, if the LLVM toolset is chosen.
 - `lld`: Used to link the resulting binary, if the LLVM toolset is chosen.
 - `gcc (gcc, g++)`: Used to compile C/C++ source files and to compile
   the dependency tree of C/C++ object files, if the GNU toolset is chosen.
+- `gdb`: Used to debug executable binaries, if the GNU toolset is chosen.
 - `ld`: Used to link the resulting binary, if the GNU toolset is chosen.
 - `gfortran`: Used to compile FORTRAN source files.
 - `doxygen`: Used to generate HTML documentation for projects.
@@ -65,7 +67,10 @@ for proper functionality.
 - `clean`: Deletes the build artifacts of the project (the built executable and
   the object files).
 - `rebuild [TARGET]`: Equivalent to subsequently invoking `clean` and `build`.
-- `run [TARGET]`, `r`: Builds and executes the project executable.
+- `run [TARGET]`, `r`: Builds and executes the project executable. Only
+  executable projects can be run.
+- `debug [TARGET]`, `d`: Builds and executes the project executable in the
+  debugger. Only executable projects can be debugged.
 - `lines`: Displays the amount of lines of source code for the whole project.
 - `analyze`: Performs static analysis for the C/C++ source files in the project.
 - `format`, `fmt` : Formats the source files in-place using `clang-format`.

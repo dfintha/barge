@@ -74,7 +74,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let custom_fortranflags =
         get_field_or_default!(project.custom_fortranflags, DEFAULT_CUSTOM_FORTRANFLAGS);
 
-    let (c_compiler, cpp_compiler, fortran_compiler, linker, _) = get_toolset_executables(toolset);
+    let (c_compiler, cpp_compiler, fortran_compiler, linker) = get_toolset_executables(toolset);
 
     let pic_flag = if project.project_type != ProjectType::Executable {
         "-fPIC"
@@ -266,15 +266,9 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> Result<(String, Stri
 
 fn get_toolset_executables(
     toolset: &Toolset,
-) -> (
-    &'static str,
-    &'static str,
-    &'static str,
-    &'static str,
-    &'static str,
-) {
+) -> (&'static str, &'static str, &'static str, &'static str) {
     match toolset {
-        Toolset::Gnu => ("gcc", "g++", "gfortran", "ld", "gdb"),
-        Toolset::Llvm => ("clang", "clang++", "gfortran", "lld", "lldb"),
+        Toolset::Gnu => ("gcc", "g++", "gfortran", "ld"),
+        Toolset::Llvm => ("clang", "clang++", "gfortran", "lld"),
     }
 }
