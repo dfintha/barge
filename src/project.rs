@@ -42,6 +42,13 @@ pub enum ProjectType {
     StaticLibrary,
 }
 
+#[derive(Debug, PartialEq)]
+pub(crate) enum CollectSourceFilesMode {
+    All,
+    CCppSourcesOnly,
+    LinkerScriptsOnly,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Project {
     pub name: String,
@@ -264,7 +271,7 @@ impl Project {
     }
 
     pub(crate) fn format(&self) -> Result<()> {
-        let sources = collect_source_files(true)?;
+        let sources = collect_source_files(CollectSourceFilesMode::CCppSourcesOnly)?;
         let style_arg = if let Some(format_style) = &self.format_style {
             "--style=".to_string() + &format_style
         } else {
@@ -319,39 +326,41 @@ fn generate_default_makeopts() -> Result<Vec<String>> {
     Ok(vec![format!("-j{}", parallel_jobs)])
 }
 
-pub(crate) fn collect_source_files(c_cpp_only: bool) -> Result<Vec<String>> {
-    let fortran_args = if !c_cpp_only {
-        vec!["-o", "-name", "*.f90"]
-    } else {
-        vec![]
+pub(crate) fn collect_source_files(mode: CollectSourceFilesMode) -> Result<Vec<String>> {
+    let arguments = match mode {
+        CollectSourceFilesMode::All => {
+            vec![
+                "-name", "*.f90", // FORTRAN Source
+                "-o", "-name", "*.s", // Assembly Source
+                "-o", "-name", "*.ld", // Linker Script
+                "-o", "-name", "*.c", // C Source
+                "-o", "-name", "*.cpp", // C++ Source
+                "-o", "-name", "*.h", // C Header
+                "-o", "-name", "*.hpp", // C++ Header
+            ]
+        }
+        CollectSourceFilesMode::CCppSourcesOnly => {
+            vec![
+                "-name", "*.c", // C Source
+                "-o", "-name", "*.cpp", // C++ Source
+                "-o", "-name", "*.h", // C Header
+                "-o", "-name", "*.hpp", // C++ Header
+            ]
+        }
+        CollectSourceFilesMode::LinkerScriptsOnly => {
+            vec!["-name", "*.ld"] // Linker Script
+        }
     };
 
     let find_src = Command::new("find")
         .arg("src")
         .args(vec!["-type", "f"])
-        .args(vec!["-name", "*.c"])
-        .args(vec!["-o", "-name", "*.cpp"])
-        .args(vec!["-o", "-name", "*.s"])
-        .args(vec!["-o", "-name", "*.h"])
-        .args(vec!["-o", "-name", "*.hpp"])
-        .args(fortran_args)
+        .args(arguments)
         .output()?
         .stdout;
 
-    let mut find_src: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
-
-    let find_include = Command::new("find")
-        .arg("include")
-        .args(vec!["-type", "f"])
-        .args(vec!["-name", "*.h"])
-        .args(vec!["-o", "-name", "*.hpp"])
-        .output()?
-        .stdout;
-
-    let mut found: Vec<_> = std::str::from_utf8(&find_include)?.split('\n').collect();
-    found.append(&mut find_src);
+    let mut found: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
     found.retain(|str| !str.is_empty());
-
     Ok(found.iter().map(|s| s.to_string()).collect())
 }
 

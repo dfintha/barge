@@ -1,6 +1,6 @@
 use crate::makefile::BuildTarget;
 use crate::output::*;
-use crate::project::{collect_source_files, Project, ProjectType};
+use crate::project::{collect_source_files, CollectSourceFilesMode, Project, ProjectType};
 use crate::result::{print_error, BargeError, Result};
 use crate::utilities::{attempt_remove_directory, look_for_project_directory};
 use std::fs::File;
@@ -49,7 +49,7 @@ fn clean() -> Result<()> {
 }
 
 fn lines() -> Result<()> {
-    let sources = collect_source_files(false)?;
+    let sources = collect_source_files(CollectSourceFilesMode::All)?;
 
     let cat = Command::new("cat")
         .args(sources)

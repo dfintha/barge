@@ -13,8 +13,8 @@ directories are supported.
 
 Source and header files shall have appropriate file extensions based on their
 type: `.c` for C source files, `.cpp` for C++ source files, `.s` for Assembly
-source files, `.f90` for FORTRAN source files, .h` for C header files, and
-`.hpp` for C++ header files.
+source files, `.f90` for FORTRAN source files, `.ld` for linker scripts, `.h`
+for C header files, and `.hpp` for C++ header files.
 
 `barge` supports the [`NO_COLOR`](https://no-color.org/) environment variable:
 if it is set, no output will be colorized using ANSI terminal escape codes.
@@ -33,6 +33,7 @@ for proper functionality.
 - `coreutils (cat, wc)`: Used internally to count source code lines.
 - `findutils (find)`: Used internally to collect project files.
 - `make`: Used internally to perform various tasks on the project.
+  GNU variant required.
 - `git`: Used to initialize a `git`˙repository on project creation.
 
 ### Project-dependent

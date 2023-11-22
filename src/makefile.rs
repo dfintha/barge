@@ -1,8 +1,9 @@
 use crate::output::NO_COLOR;
 use crate::project::{
-    collect_source_files, Library, Project, ProjectType, Toolset, DEFAULT_CPP_STANDARD,
-    DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_CXXFLAGS, DEFAULT_CUSTOM_FORTRANFLAGS,
-    DEFAULT_CUSTOM_LDFLAGS, DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD, DEFAULT_TOOLSET,
+    collect_source_files, CollectSourceFilesMode, Library, Project, ProjectType, Toolset,
+    DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_CXXFLAGS,
+    DEFAULT_CUSTOM_FORTRANFLAGS, DEFAULT_CUSTOM_LDFLAGS, DEFAULT_C_STANDARD,
+    DEFAULT_FORTRAN_STANDARD, DEFAULT_TOOLSET,
 };
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
@@ -74,7 +75,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let custom_fortranflags =
         get_field_or_default!(project.custom_fortranflags, DEFAULT_CUSTOM_FORTRANFLAGS);
 
-    let (c_compiler, cpp_compiler, fortran_compiler, linker) = get_toolset_executables(toolset);
+    let (c_compiler, cpp_compiler, fortran_compiler) = get_toolset_executables(toolset);
 
     let pic_flag = if project.project_type != ProjectType::Executable {
         "-fPIC"
@@ -111,7 +112,7 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
 
     let fortranflags = String::from("-std=") + fortran_std + " " + custom_fortranflags;
 
-    let has_fortran_sources = collect_source_files(false)?
+    let has_fortran_sources = collect_source_files(CollectSourceFilesMode::All)?
         .iter()
         .any(|source| source.ends_with(".f90"));
     let fortran_ldflags = if has_fortran_sources {
@@ -120,9 +121,15 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         ""
     };
 
+    let ldscriptflags = collect_source_files(CollectSourceFilesMode::LinkerScriptsOnly)?
+        .iter()
+        .map(|f| format!("-T {}", f))
+        .collect::<Vec<_>>()
+        .join(" ");
+
     let ldflags = format!(
-        "{} {} {} {}",
-        target_ldflags, library_ldflags, custom_ldflags, fortran_ldflags
+        "{} {} {} {} {}",
+        target_ldflags, library_ldflags, custom_ldflags, fortran_ldflags, ldscriptflags
     );
 
     let name = match project.project_type {
@@ -165,7 +172,6 @@ DIM=`tput dim`
         fortran_compiler,
         fortranflags,
         target.to_string(),
-        linker,
         ldflags,
         name,
         target.to_string(),
@@ -264,11 +270,9 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> Result<(String, Stri
     Ok((library_cflags, library_ldflags))
 }
 
-fn get_toolset_executables(
-    toolset: &Toolset,
-) -> (&'static str, &'static str, &'static str, &'static str) {
+fn get_toolset_executables(toolset: &Toolset) -> (&'static str, &'static str, &'static str) {
     match toolset {
-        Toolset::Gnu => ("gcc", "g++", "gfortran", "ld"),
-        Toolset::Llvm => ("clang", "clang++", "gfortran", "lld"),
+        Toolset::Gnu => ("gcc", "g++", "gfortran"),
+        Toolset::Llvm => ("clang", "clang++", "gfortran"),
     }
 }

@@ -18,8 +18,8 @@ FORTRANFLAGS={}
 FORTRANSRC=$(shell find src -type f -name '*.f90')
 FORTRANOBJ=$(patsubst src/%.f90,build/{}/obj/%.f90.o,$(FORTRANSRC))
 
-LD={}
 LDFLAGS={}
+LDSCRIPTS=$(shell find src -type f -name '*.ld')
 
 NAME={}
 BINARY=build/{}/$(NAME)
@@ -33,7 +33,7 @@ all: $(BINARY)
 {}
 {}
 
-$(BINARY): $(OBJECTS)
+$(BINARY): $(OBJECTS) $(LDSCRIPTS)
 	@mkdir -p $(shell dirname $@)
 	@printf '%sLinking executable %s%s\n' $(GREEN) $@ $(RESET)
 	{}
