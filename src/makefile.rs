@@ -1,7 +1,7 @@
 use crate::output::NO_COLOR;
 use crate::project::{
-    collect_source_files, CollectSourceFilesMode, Library, Project, ProjectType, Toolset,
-    DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_CXXFLAGS,
+    collect_source_files, get_toolset_executables, CollectSourceFilesMode, Library, Project,
+    ProjectType, DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_CXXFLAGS,
     DEFAULT_CUSTOM_FORTRANFLAGS, DEFAULT_CUSTOM_LDFLAGS, DEFAULT_C_STANDARD,
     DEFAULT_FORTRAN_STANDARD, DEFAULT_TOOLSET,
 };
@@ -268,11 +268,4 @@ fn build_library_flags(libraries: &Option<Vec<Library>>) -> Result<(String, Stri
     }
 
     Ok((library_cflags, library_ldflags))
-}
-
-fn get_toolset_executables(toolset: &Toolset) -> (&'static str, &'static str, &'static str) {
-    match toolset {
-        Toolset::Gnu => ("gcc", "g++", "gfortran"),
-        Toolset::Llvm => ("clang", "clang++", "gfortran"),
-    }
 }

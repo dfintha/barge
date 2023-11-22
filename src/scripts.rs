@@ -1,4 +1,5 @@
 use crate::makefile::BuildTarget;
+use crate::project::{get_toolset_executables, Toolset};
 use crate::result::{BargeError, Result};
 use crate::NO_COLOR;
 use std::collections::HashMap;
@@ -18,6 +19,7 @@ pub(crate) struct ScriptEnvironment<'a> {
     pub version: &'a String,
     pub authors: String,
     pub description: &'a String,
+    pub toolset: Toolset,
 }
 
 impl TryFrom<&str> for ScriptKind {
@@ -42,6 +44,9 @@ impl TryFrom<&str> for ScriptKind {
 
 pub(crate) fn execute_script(path: &str, name: &str, env: ScriptEnvironment) -> Result<()> {
     let kind = ScriptKind::try_from(get_file_extension(path)?)?;
+
+    let (cc, cxx, _) = get_toolset_executables(&env.toolset);
+
     match kind {
         ScriptKind::ShellScript => {
             execute_script_plain(path, "bash", env)?;
@@ -53,10 +58,10 @@ pub(crate) fn execute_script(path: &str, name: &str, env: ScriptEnvironment) -> 
             execute_script_plain(path, "perl", env)?;
         }
         ScriptKind::CSource => {
-            execute_clang_source(path, name, "clang", "-std=c11", env)?;
+            execute_c_cpp_source(path, name, cc, "-std=c11", env)?;
         }
         ScriptKind::CppSource => {
-            execute_clang_source(path, name, "clang++", "-std=c++17", env)?;
+            execute_c_cpp_source(path, name, cxx, "-std=c++17", env)?;
         }
     }
     Ok(())
@@ -98,14 +103,23 @@ fn execute_script_env(path: &str, interpreter: &str, env: ScriptEnvironment) -> 
     }
 }
 
-fn execute_clang_source(
+fn execute_c_cpp_source(
     path: &str,
     name: &str,
     compiler: &str,
     std_flag: &str,
     env: ScriptEnvironment,
 ) -> Result<()> {
+    if !std::path::Path::new("bin").exists() {
+        std::fs::create_dir("bin")?;
+    }
+
     let target = format!("bin/{}", name);
+
+    if std::path::Path::new(&target).exists() {
+        std::fs::remove_file(&target)?;
+    }
+
     let cc = Command::new(compiler)
         .arg(std_flag)
         .arg(path)

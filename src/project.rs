@@ -19,7 +19,7 @@ pub const DEFAULT_CUSTOM_CXXFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_FORTRANFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_LDFLAGS: &str = "";
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum Toolset {
     Gnu,
@@ -138,6 +138,7 @@ impl Project {
                     version: &self.version,
                     authors: self.authors.join(", "),
                     description: &self.description,
+                    toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
                 },
             )?;
         }
@@ -169,6 +170,7 @@ impl Project {
                         version: &self.version,
                         authors: self.authors.join(", "),
                         description: &self.description,
+                        toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
                     },
                 )?;
             }
@@ -362,6 +364,15 @@ pub(crate) fn collect_source_files(mode: CollectSourceFilesMode) -> Result<Vec<S
     let mut found: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
     found.retain(|str| !str.is_empty());
     Ok(found.iter().map(|s| s.to_string()).collect())
+}
+
+pub(crate) fn get_toolset_executables(
+    toolset: &Toolset,
+) -> (&'static str, &'static str, &'static str) {
+    match toolset {
+        Toolset::Gnu => ("gcc", "g++", "gfortran"),
+        Toolset::Llvm => ("clang", "clang++", "gfortran"),
+    }
 }
 
 fn get_git_user() -> Result<String> {
