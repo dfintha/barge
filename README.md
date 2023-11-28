@@ -223,4 +223,16 @@ variables set.
 - `BARGE_PROJECT_VERSION`: The version of the project.
 - `BARGE_OBJECTS_DIR`: The directory where object files reside.
 - `BARGE_BINARY_DIR`: The directory where the compiled binary resides.
+- `BARGE_GIT_COMMIT`: The `git` commit hash of the project (if applicable).
+- `BARGE_GIT_BRANCH`: The `git` branch of the project (if applicable).
+- `BARGE_BUILD_START_TIMESTAMP`: Timestamp of the start of the whole build
+  process.
+- `BARGE_STEP_START_TIMESTAMP`: Timestamp of the start of the current build
+  step.
+- `BARGE_BUILD_STEP_KIND`: Kind of the current build step (`prebuild` or
+  `postbuild`).
+- `BARGE_TOOLSET`: Toolset of the project (`llvm` or `gnu`).
 - `NO_COLOR`: If set when `barge` was executed, is also set in the scripts.
+
+Timestamps in build step script environment variables are in RFC3339 or ISO 8601
+format (for example, `2023-11-28T02:40:50.370090151+01:00`).

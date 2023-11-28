@@ -1,8 +1,9 @@
 use crate::makefile::{generate_analyze_makefile, generate_build_makefile, BuildTarget};
 use crate::result::{BargeError, Result};
-use crate::scripts::{execute_script, ScriptEnvironment};
+use crate::scripts::{execute_script, BuildScriptKind, ScriptEnvironment};
 use crate::utilities::attempt_remove_directory;
 use crate::{color_eprintln, color_println, BLUE, GREEN, NO_COLOR, RED};
+use chrono::Local;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::path::Path;
@@ -121,12 +122,15 @@ impl Project {
             target.to_string()
         );
         let start_time = Instant::now();
+        let start_timestamp = Local::now();
 
         let makeopts = if let Some(makeopts) = &self.custom_makeopts {
             makeopts.split(' ').map(|str| str.to_string()).collect()
         } else {
             generate_default_makeopts()?
         };
+
+        let (commit_hash, branch) = get_git_project_info()?;
 
         if let Some(pre_build_step) = &self.pre_build_step {
             execute_script(
@@ -138,6 +142,10 @@ impl Project {
                     version: &self.version,
                     authors: self.authors.join(", "),
                     description: &self.description,
+                    git_commit_hash: commit_hash.clone(),
+                    git_branch: branch.clone(),
+                    build_timestamp: start_timestamp,
+                    kind: BuildScriptKind::PreBuildStep,
                     toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
                 },
             )?;
@@ -170,6 +178,10 @@ impl Project {
                         version: &self.version,
                         authors: self.authors.join(", "),
                         description: &self.description,
+                        git_commit_hash: commit_hash,
+                        git_branch: branch,
+                        build_timestamp: start_timestamp,
+                        kind: BuildScriptKind::PostBuildStep,
                         toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
                     },
                 )?;
@@ -391,6 +403,26 @@ fn get_git_config_field(field: &str) -> Result<String> {
         .output()?
         .stdout;
     Ok(std::str::from_utf8(&result)?.to_string())
+}
+
+fn get_git_project_info() -> Result<(Option<String>, Option<String>)> {
+    let commit_hash = Command::new("git").args(["rev-parse", "HEAD"]).output()?;
+    let commit_hash = if commit_hash.status.success() {
+        Some(std::str::from_utf8(&commit_hash.stdout)?.to_string())
+    } else {
+        None
+    };
+
+    let branch = Command::new("git")
+        .args(["branch", "--show-current"])
+        .output()?;
+    let branch = if branch.status.success() {
+        Some(std::str::from_utf8(&branch.stdout)?.to_string())
+    } else {
+        None
+    };
+
+    Ok((commit_hash, branch))
 }
 
 fn get_debugger(toolset: &Toolset) -> &'static str {
