@@ -378,8 +378,8 @@ pub(crate) fn get_toolset_executables(
 fn get_git_user() -> Result<String> {
     Ok(format!(
         "{} <{}>",
-        get_git_config_field("user.name")?,
-        get_git_config_field("user.email")?,
+        get_git_config_field("user.name")?.trim_end(),
+        get_git_config_field("user.email")?.trim_end(),
     ))
 }
 
