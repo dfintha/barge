@@ -144,10 +144,12 @@ following fields.
   `clang-format`. If `file` is given, `clang-format` will look for a
   `.clang-format` file in parent directories relative to the given source file.
   The default is "Google".
-- **`pre_build_step` (string, optional)**:
-  A script or C/C++ source file to execute before starting a build.
-- **`post_build_step` (string, optional)**:
-  A script or C/C++ source file to execute after a successful build.
+- **`pre_build_steps` (string, optional)**:
+  List of scripts and/or C/C++ source files to execute before starting a build.
+  These steps are executed in the same order they are in this list.
+- **`post_build_steps` (string, optional)**:
+  List of scripts and/or C/C++ source files to execute after a successful build.
+  These steps are executed in the same order they are in this list.
 
 
 ### Specific project file, which contains all the optional fields
@@ -180,8 +182,13 @@ following fields.
     "custom_ldflags": "-ggdb",
     "custom_makeopts": "-j2",
     "format_style": "Google",
-    "pre_build_step": "prebuild.py",
-    "post_build_step": "postbuild.cpp"
+    "pre_build_steps": [
+        "prebuild-1.py",
+        "prebuild-2.cpp"
+    ],
+    "post_build_steps": [
+        "postbuild.c"
+    ]
 }
 ```
 

@@ -80,9 +80,9 @@ pub(crate) struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format_style: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pre_build_step: Option<String>,
+    pub pre_build_steps: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub post_build_step: Option<String>,
+    pub post_build_steps: Option<Vec<String>>,
 }
 
 impl Project {
@@ -104,8 +104,8 @@ impl Project {
             custom_ldflags: None,
             custom_makeopts: None,
             format_style: None,
-            pre_build_step: None,
-            post_build_step: None,
+            pre_build_steps: None,
+            post_build_steps: None,
         })
     }
 
@@ -132,23 +132,25 @@ impl Project {
 
         let (commit_hash, branch) = get_git_project_info()?;
 
-        if let Some(pre_build_step) = &self.pre_build_step {
-            execute_script(
-                pre_build_step,
-                "prebuild",
-                ScriptEnvironment {
-                    target,
-                    name: &self.name,
-                    version: &self.version,
-                    authors: self.authors.join(", "),
-                    description: &self.description,
-                    git_commit_hash: commit_hash.clone(),
-                    git_branch: branch.clone(),
-                    build_timestamp: start_timestamp,
-                    kind: BuildScriptKind::PreBuildStep,
-                    toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
-                },
-            )?;
+        if let Some(pre_build_steps) = &self.pre_build_steps {
+            for step in pre_build_steps {
+                execute_script(
+                    step,
+                    "prebuild",
+                    ScriptEnvironment {
+                        target,
+                        name: &self.name,
+                        version: &self.version,
+                        authors: self.authors.join(", "),
+                        description: &self.description,
+                        git_commit_hash: commit_hash.clone(),
+                        git_branch: branch.clone(),
+                        build_timestamp: start_timestamp,
+                        kind: BuildScriptKind::PreBuildStep,
+                        toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
+                    },
+                )?;
+            }
         }
 
         let mut make = Command::new("make")
@@ -168,23 +170,25 @@ impl Project {
         let status = make.wait()?.success();
 
         if status {
-            if let Some(post_build_step) = &self.post_build_step {
-                execute_script(
-                    post_build_step,
-                    "postbuild",
-                    ScriptEnvironment {
-                        target,
-                        name: &self.name,
-                        version: &self.version,
-                        authors: self.authors.join(", "),
-                        description: &self.description,
-                        git_commit_hash: commit_hash,
-                        git_branch: branch,
-                        build_timestamp: start_timestamp,
-                        kind: BuildScriptKind::PostBuildStep,
-                        toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
-                    },
-                )?;
+            if let Some(post_build_steps) = &self.post_build_steps {
+                for step in post_build_steps {
+                    execute_script(
+                        step,
+                        "postbuild",
+                        ScriptEnvironment {
+                            target,
+                            name: &self.name,
+                            version: &self.version,
+                            authors: self.authors.join(", "),
+                            description: &self.description,
+                            git_commit_hash: commit_hash.clone(),
+                            git_branch: branch.clone(),
+                            build_timestamp: start_timestamp,
+                            kind: BuildScriptKind::PostBuildStep,
+                            toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
+                        },
+                    )?;
+                }
             }
 
             let finish_time = Instant::now();
