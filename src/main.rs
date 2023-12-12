@@ -14,29 +14,31 @@ mod result;
 mod scripts;
 mod utilities;
 
-fn init(name: &str, project_type: ProjectType, json: bool) -> Result<()> {
-    let path = String::from(name);
-
-    std::fs::create_dir(path.clone())?;
-    let project = Project::new(name, project_type)?;
-    let mut file = File::create(path.clone() + "/barge.json")?;
+fn init(name: String, project_type: ProjectType, json: bool) -> Result<()> {
+    std::fs::create_dir(name.clone())?;
+    let project = Project::new(&name, project_type)?;
+    let mut file = File::create(name.clone() + "/barge.json")?;
     let content = serde_json::to_string_pretty(&project)?;
     file.write_all(content.as_bytes())?;
     file.write_all(b"\n")?;
 
     if !json {
-        std::fs::create_dir(path.clone() + "/src")?;
-        std::fs::create_dir(path.clone() + "/include")?;
-        let mut file = File::create(path.clone() + "/src/main.cpp")?;
+        std::fs::create_dir(name.clone() + "/src")?;
+        std::fs::create_dir(name.clone() + "/include")?;
+        let mut file = File::create(name.clone() + "/src/main.cpp")?;
         file.write_all(include_str!("template-main.in").as_bytes())?;
-        let mut file = File::create(path.clone() + "/.gitignore")?;
+        let mut file = File::create(name.clone() + "/.gitignore")?;
         file.write_all("build/*\n".as_bytes())?;
-        let mut file = File::create(path.clone() + "/Doxyfile")?;
+        let mut file = File::create(name.clone() + "/Doxyfile")?;
         file.write_all(include_str!("template-doxyfile.in").as_bytes())?;
-        Command::new("git").arg("init").arg(name).output()?;
-        color_println!(GREEN, "Project {} successfully created", name);
+        Command::new("git").arg("init").arg(&name).output()?;
+        color_println!(GREEN, "Project {} successfully created", &name);
     } else {
-        color_println!(GREEN, "JSON file for project {} successfully created", name);
+        color_println!(
+            GREEN,
+            "JSON file for project {} successfully created",
+            &name
+        );
     }
 
     Ok(())
@@ -146,7 +148,7 @@ fn parse_and_run_subcommands() -> Result<()> {
         .try_get_matches()?;
 
     if let Some(init_args) = matches.subcommand_matches("init") {
-        let project_name = *init_args
+        let project_name: &String = init_args
             .get_one("NAME")
             .ok_or(BargeError::NoneOption("Couldn't parse project name"))?;
 
@@ -163,9 +165,10 @@ fn parse_and_run_subcommands() -> Result<()> {
             Ok(ProjectType::Executable)
         };
 
-        let json = init_args.contains_id("json");
+        let json = init_args.contains_id("json") && *init_args.get_one("json").unwrap_or(&false);
         return if let Ok(project_type) = project_type {
-            init(project_name, project_type, json)
+            init(project_name.to_string(), project_type, json)?;
+            std::process::exit(0);
         } else {
             project_type.map(|_| ())
         };
@@ -217,13 +220,14 @@ fn parse_and_run_subcommands() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let project_dir = look_for_project_directory();
-    print_error(&project_dir);
-
-    let previous_dir = std::env::current_dir()?;
-    std::env::set_current_dir(project_dir?)?;
     let result = parse_and_run_subcommands();
     print_error(&result);
+
+    let project_dir = look_for_project_directory();
+    print_error(&project_dir);
+    let previous_dir = std::env::current_dir()?;
+    std::env::set_current_dir(project_dir?)?;
+
     std::env::set_current_dir(previous_dir)?;
 
     if result.is_err() {
