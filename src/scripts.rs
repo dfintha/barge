@@ -120,12 +120,17 @@ fn execute_c_cpp_source(
     std_flag: &str,
     env: ScriptEnvironment,
 ) -> Result<()> {
-    if !std::path::Path::new("bin").exists() {
-        std::fs::create_dir("bin")?;
+    let subdirectory = match env.kind {
+        BuildScriptKind::PreBuildStep => "prebuild",
+        BuildScriptKind::PostBuildStep => "postbuild"
+    };
+
+    let directory = format!("build/{}", subdirectory);
+    if !std::path::Path::new(&directory).exists() {
+        std::fs::create_dir_all(directory)?;
     }
 
-    let target = format!("bin/{}", name);
-
+    let target = format!("build/{}/{}", subdirectory, name);
     if std::path::Path::new(&target).exists() {
         std::fs::remove_file(&target)?;
     }
