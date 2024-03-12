@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..700;1,100..700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.memItemLeft, .memItemRight, .memtitle, .memname, .paramtype, .paramname {
+    font-family: 'Roboto Mono', monospace;
+}
+
+.memtitle {
+    font-weight: bold;
+}
+
+.memtitle, .memproto, .sm.sm-dox {
+    background-color: cornflowerblue;
+    background-image: none;
+}
+
+.memtitle,
+.memproto,
+.paramname,
+.sm.sm-dox > li > a,
+.contents .permalink a,
+.contents .permalink a:visited,
+.contents .permalink a:hover
+{
+    background-image: none;
+    color: white;
+    text-shadow: none;
+    text-decoration: none;
+}
+
+.sm.sm-dox > li > a > span.sub-arrow {
+    border-color: white transparent transparent transparent;
+}
+
+.sm.sm-dox a:hover {
+    background-color: midnightblue;
+    background-image: none;
+}
+
+.contents a, .contents a:visited {
+    color: cornflowerblue;
+}

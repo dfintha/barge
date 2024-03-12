@@ -23,14 +23,19 @@ fn init(name: String, project_type: ProjectType, json: bool) -> Result<()> {
     file.write_all(b"\n")?;
 
     if !json {
+        std::fs::create_dir(name.clone() + "/res")?;
         std::fs::create_dir(name.clone() + "/src")?;
         std::fs::create_dir(name.clone() + "/include")?;
-        let mut file = File::create(name.clone() + "/src/main.cpp")?;
-        file.write_all(include_str!("template-main.in").as_bytes())?;
         let mut file = File::create(name.clone() + "/.gitignore")?;
         file.write_all("build/*\n".as_bytes())?;
+        let mut file = File::create(name.clone() + "/README.md")?;
+        file.write_all(&format!("# `{}`\n", &name).as_bytes())?;
         let mut file = File::create(name.clone() + "/Doxyfile")?;
         file.write_all(include_str!("template-doxyfile.in").as_bytes())?;
+        let mut file = File::create(name.clone() + "/res/doxygen-style.css")?;
+        file.write_all(include_str!("template-doxygen-style.css").as_bytes())?;
+        let mut file = File::create(name.clone() + "/src/main.cpp")?;
+        file.write_all(include_str!("template-main.in").as_bytes())?;
         Command::new("git").arg("init").arg(&name).output()?;
         color_println!(GREEN, "Project {} successfully created", &name);
     } else {
