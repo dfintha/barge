@@ -1,4 +1,4 @@
-name: Rust
+name: Build, Analyze, and Test
 
 on:
   push:
@@ -10,10 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  Run:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Build the project
