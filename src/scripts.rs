@@ -122,7 +122,7 @@ fn execute_c_cpp_source(
 ) -> Result<()> {
     let subdirectory = match env.kind {
         BuildScriptKind::PreBuildStep => "prebuild",
-        BuildScriptKind::PostBuildStep => "postbuild"
+        BuildScriptKind::PostBuildStep => "postbuild",
     };
 
     let directory = format!("build/{}", subdirectory);

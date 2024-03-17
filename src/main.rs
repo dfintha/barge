@@ -29,7 +29,7 @@ fn init(name: String, project_type: ProjectType, json: bool) -> Result<()> {
         let mut file = File::create(name.clone() + "/.gitignore")?;
         file.write_all("build/*\n".as_bytes())?;
         let mut file = File::create(name.clone() + "/README.md")?;
-        file.write_all(&format!("# `{}`\n", &name).as_bytes())?;
+        file.write_all(format!("# `{}`\n", &name).as_bytes())?;
         let mut file = File::create(name.clone() + "/Doxyfile")?;
         file.write_all(include_str!("template-doxyfile.in").as_bytes())?;
         let mut file = File::create(name.clone() + "/res/doxygen-style.css")?;
@@ -78,7 +78,7 @@ fn lines() -> Result<()> {
     Ok(())
 }
 
-fn in_project_folder() -> bool {
+fn in_project_directory() -> bool {
     let metadata = std::fs::metadata("barge.json");
     if let Ok(metadata) = metadata {
         metadata.is_file()
@@ -179,11 +179,13 @@ fn parse_and_run_subcommands() -> Result<()> {
         };
     }
 
-    if !in_project_folder() {
-        color_eprintln!(
-            "This subcommand must be run in a project folder, which contains barge.json"
-        );
-        std::process::exit(1);
+    let project_dir = look_for_project_directory()?;
+    let previous_dir = std::env::current_dir()?;
+    std::env::set_current_dir(project_dir)?;
+
+    if !in_project_directory() {
+        std::env::set_current_dir(previous_dir)?;
+        return Err(BargeError::ProjectNotFound("Project file not found."));
     }
 
     let project = Project::load("barge.json")?;
@@ -221,21 +223,12 @@ fn parse_and_run_subcommands() -> Result<()> {
         project.document()?;
     }
 
-    Ok(())
+    Ok(std::env::set_current_dir(previous_dir)?)
 }
 
 fn main() -> Result<()> {
-    let result = parse_and_run_subcommands();
-    print_error(&result);
-
-    let project_dir = look_for_project_directory();
-    print_error(&project_dir);
-    let previous_dir = std::env::current_dir()?;
-    std::env::set_current_dir(project_dir?)?;
-
-    std::env::set_current_dir(previous_dir)?;
-
-    if result.is_err() {
+    if let Err(error) = parse_and_run_subcommands() {
+        print_error(&error);
         std::process::exit(1);
     }
     std::process::exit(0);
