@@ -9,7 +9,6 @@ use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Instant;
-use sysinfo::SystemExt;
 
 pub const DEFAULT_C_STANDARD: &str = "c11";
 pub const DEFAULT_CPP_STANDARD: &str = "c++17";
@@ -336,7 +335,7 @@ fn generate_default_makeopts() -> Result<Vec<String>> {
     let mut system = sysinfo::System::new_all();
     system.refresh_all();
 
-    let processor_cores = system.processors().len() as u64;
+    let processor_cores = system.cpus().len() as u64;
     let free_memory_in_kb = system.total_memory() - system.used_memory();
     let free_2g_memory = free_memory_in_kb / (2 * 1024 * 1024);
     let parallel_jobs = std::cmp::max(1, std::cmp::min(processor_cores, free_2g_memory));
