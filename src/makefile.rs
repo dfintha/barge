@@ -1,14 +1,14 @@
 use crate::output::NO_COLOR;
 use crate::project::{
     collect_source_files, get_toolset_executables, CollectSourceFilesMode, Library, Project,
-    ProjectType, DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_CXXFLAGS,
-    DEFAULT_CUSTOM_FORTRANFLAGS, DEFAULT_CUSTOM_LDFLAGS, DEFAULT_C_STANDARD,
-    DEFAULT_FORTRAN_STANDARD, DEFAULT_TOOLSET,
+    ProjectType, DEFAULT_COBOL_STANDARD, DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS,
+    DEFAULT_CUSTOM_COBOLFLAGS, DEFAULT_CUSTOM_CXXFLAGS, DEFAULT_CUSTOM_FORTRANFLAGS,
+    DEFAULT_CUSTOM_LDFLAGS, DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD, DEFAULT_TOOLSET,
 };
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
+use std::fmt::Display;
 use std::process::Command;
-use std::string::ToString;
 
 #[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
 pub(crate) enum BuildTarget {
@@ -16,11 +16,14 @@ pub(crate) enum BuildTarget {
     Release,
 }
 
-impl ToString for BuildTarget {
-    fn to_string(&self) -> String {
+impl Display for BuildTarget {
+    fn fmt(
+        &self,
+        formatter: &mut std::fmt::Formatter<'_>,
+    ) -> std::result::Result<(), std::fmt::Error> {
         match self {
-            BuildTarget::Debug => String::from("debug"),
-            BuildTarget::Release => String::from("release"),
+            BuildTarget::Debug => write!(formatter, "debug"),
+            BuildTarget::Release => write!(formatter, "release"),
         }
     }
 }
@@ -49,6 +52,11 @@ macro_rules! get_field_or_default {
     };
 }
 
+fn get_cobol_ldflags() -> Result<String> {
+    let result = Command::new("cob-config").arg("--libs").output()?.stdout;
+    Ok(String::from_utf8(result)?)
+}
+
 pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) -> Result<String> {
     let common_cflags = "-Wall -Wextra -Wpedantic -Wshadow -Wconversion \
                          -Wdouble-promotion -Wformat=2 -Iinclude -Isrc";
@@ -69,11 +77,14 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let c_std = get_field_or_default!(project.c_standard, DEFAULT_C_STANDARD);
     let cpp_std = get_field_or_default!(project.cpp_standard, DEFAULT_CPP_STANDARD);
     let fortran_std = get_field_or_default!(project.fortran_standard, DEFAULT_FORTRAN_STANDARD);
+    let cobol_std = get_field_or_default!(project.cobol_standard, DEFAULT_COBOL_STANDARD);
     let custom_cflags = get_field_or_default!(project.custom_cflags, DEFAULT_CUSTOM_CFLAGS);
     let custom_cxxflags = get_field_or_default!(project.custom_cxxflags, DEFAULT_CUSTOM_CXXFLAGS);
     let custom_ldflags = get_field_or_default!(project.custom_ldflags, DEFAULT_CUSTOM_LDFLAGS);
     let custom_fortranflags =
         get_field_or_default!(project.custom_fortranflags, DEFAULT_CUSTOM_FORTRANFLAGS);
+    let custom_cobolflags =
+        get_field_or_default!(project.custom_cobolflags, DEFAULT_CUSTOM_COBOLFLAGS);
 
     let (c_compiler, cpp_compiler, fortran_compiler) = get_toolset_executables(toolset);
 
@@ -121,6 +132,17 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         ""
     };
 
+    let cobolflags = String::from("-std=") + cobol_std + " " + custom_cobolflags;
+
+    let has_cobol_sources = collect_source_files(CollectSourceFilesMode::All)?
+        .iter()
+        .any(|source| source.ends_with(".cob"));
+    let cobol_ldflags = if has_cobol_sources {
+        get_cobol_ldflags()?
+    } else {
+        String::new()
+    };
+
     let ldscriptflags = collect_source_files(CollectSourceFilesMode::LinkerScriptsOnly)?
         .iter()
         .map(|f| format!("-T {}", f))
@@ -128,8 +150,13 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         .join(" ");
 
     let ldflags = format!(
-        "{} {} {} {} {}",
-        target_ldflags, library_ldflags, custom_ldflags, fortran_ldflags, ldscriptflags
+        "{} {} {} {} {} {}",
+        target_ldflags,
+        library_ldflags,
+        custom_ldflags,
+        fortran_ldflags,
+        cobol_ldflags.trim(),
+        ldscriptflags
     );
 
     let name = match project.project_type {
@@ -165,25 +192,17 @@ DIM=`tput dim`
         target.to_string(),
         c_compiler,
         cflags,
-        target.to_string(),
         cpp_compiler,
         cxxflags,
-        target.to_string(),
         fortran_compiler,
         fortranflags,
-        target.to_string(),
+        cobolflags,
         ldflags,
         name,
-        target.to_string(),
         colorization,
         c_dependencies,
         cpp_dependencies,
-        link_command,
-        target.to_string(),
-        target.to_string(),
-        target.to_string(),
-        target.to_string(),
-        target.to_string()
+        link_command
     );
 
     Ok(result)
@@ -212,7 +231,7 @@ fn get_dependencies_for_project(target: BuildTarget, extension: &str) -> Result<
         .iter()
         .map(|file| {
             let object = if let Some(name) = file.strip_prefix("src/") {
-                format!("build/{}/obj/{}.o", target.to_string(), name)
+                format!("build/{}/obj/{}.o", target, name)
             } else {
                 String::from("")
             };

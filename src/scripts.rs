@@ -175,11 +175,11 @@ fn unpack_script_environment(env: ScriptEnvironment) -> HashMap<String, String> 
     result.insert(String::from("BARGE_BUILD_TARGET"), env.target.to_string());
     result.insert(
         String::from("BARGE_OBJECTS_DIR"),
-        format!("build/{}/obj", env.target.to_string()),
+        format!("build/{}/obj", env.target),
     );
     result.insert(
         String::from("BARGE_BINARY_DIR"),
-        format!("build/{}", env.target.to_string()),
+        format!("build/{}", env.target),
     );
     result.insert(
         String::from("BARGE_GIT_COMMIT"),

@@ -50,6 +50,7 @@ for proper functionality.
 - `gdb`: Used to debug executable binaries, if the GNU toolset is chosen.
 - `ld`: Used to link the resulting binary, if the GNU toolset is chosen.
 - `gfortran`: Used to compile FORTRAN source files.
+- `cobc`: Used to compile Cobol source files.
 - `doxygen`: Used to generate HTML documentation for projects.
 - `bash`: Used for pre- and post-build shell scripts (if present).
 - `python`: Used for pre- and post-build Python 3 scripts (if present).
@@ -118,6 +119,9 @@ following fields.
 - **`fortran_standard` (string, optional)**:
   The FORTRAN standard used for the FORTRAN source files, in a format like
   "f2003". The default is "f2003".
+- **`cobol_standard` (string, optional)**:
+  The Cobol standard used for the Cobol source files, in a format like
+  "cobol2014". The default is "cobol2014".
 - **`external_libraries` (list of objects, optional)**:
   The list of external libraries to link with. This is a list of objects, which
   are represented in one of the following ways.
@@ -130,6 +134,9 @@ following fields.
   Adds the flags specified here to the C++ source file compilation command line.
 - **`custom_fortranflags` (string, optional)**:
   Adds the flags specified here to the FORTRAN source file compilation command
+  line.
+- **`custom_cobolflags` (string, optional)**:
+  Adds the flags specified here to the Cobol source file compilation command
   line.
 - **`custom_ldflags` (string, optional)**:
   Adds the flags specified here to the executable linking command line.
@@ -165,6 +172,7 @@ following fields.
     "c_standard": "c99",
     "cpp_standard": "c++14",
     "fortran_standard": "f2003",
+    "cobol_standard": "cobol2002",
     "external_libraries": [
         {
             "type": "pkg_config",
@@ -179,6 +187,7 @@ following fields.
     "custom_cflags": "-DNDEBUG",
     "custom_cxxflags": "-DNDEBUG",
     "custom_fortranflags": "",
+    "custom_cobolflags": "",
     "custom_ldflags": "-ggdb",
     "custom_makeopts": "-j2",
     "format_style": "Google",

@@ -7,6 +7,7 @@ use std::convert::From;
 pub(crate) enum BargeError {
     StdIoError(std::io::Error),
     StdStrUtf8Error(std::str::Utf8Error),
+    StdFromUtf8Error(std::string::FromUtf8Error),
     SerdeJsonError(serde_json::Error),
     ClapError(clap::Error),
     NoneOption(&'static str),
@@ -24,6 +25,12 @@ impl From<std::io::Error> for BargeError {
 impl From<std::str::Utf8Error> for BargeError {
     fn from(error: std::str::Utf8Error) -> BargeError {
         BargeError::StdStrUtf8Error(error)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for BargeError {
+    fn from(error: std::string::FromUtf8Error) -> BargeError {
+        BargeError::StdFromUtf8Error(error)
     }
 }
 
@@ -45,6 +52,7 @@ pub(crate) fn print_error(error: &BargeError) {
     match error {
         BargeError::StdIoError(e) => color_eprintln!("{}", e.to_string()),
         BargeError::StdStrUtf8Error(e) => color_eprintln!("{}", e.to_string()),
+        BargeError::StdFromUtf8Error(e) => color_eprintln!("{}", e.to_string()),
         BargeError::SerdeJsonError(e) => color_eprintln!("{}", e.to_string()),
         BargeError::ClapError(e) => println!("{}", e),
         BargeError::NoneOption(s) => color_eprintln!("{}", s),

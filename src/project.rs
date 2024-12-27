@@ -13,10 +13,12 @@ use std::time::Instant;
 pub const DEFAULT_C_STANDARD: &str = "c11";
 pub const DEFAULT_CPP_STANDARD: &str = "c++17";
 pub const DEFAULT_FORTRAN_STANDARD: &str = "f2003";
+pub const DEFAULT_COBOL_STANDARD: &str = "cobol2014";
 pub const DEFAULT_TOOLSET: &Toolset = &Toolset::Llvm;
 pub const DEFAULT_CUSTOM_CFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_CXXFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_FORTRANFLAGS: &str = "";
+pub const DEFAULT_CUSTOM_COBOLFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_LDFLAGS: &str = "";
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
@@ -65,6 +67,8 @@ pub(crate) struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fortran_standard: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub cobol_standard: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub external_libraries: Option<Vec<Library>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_cflags: Option<String>,
@@ -72,6 +76,8 @@ pub(crate) struct Project {
     pub custom_cxxflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_fortranflags: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_cobolflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_ldflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -96,10 +102,12 @@ impl Project {
             c_standard: None,
             cpp_standard: None,
             fortran_standard: None,
+            cobol_standard: None,
             external_libraries: None,
             custom_cflags: None,
             custom_cxxflags: None,
             custom_fortranflags: None,
+            custom_cobolflags: None,
             custom_ldflags: None,
             custom_makeopts: None,
             format_style: None,
@@ -209,7 +217,7 @@ impl Project {
 
     pub(crate) fn rebuild(&self, target: BuildTarget) -> Result<()> {
         color_println!(BLUE, "{}", "Removing relevant build artifacts");
-        let path = format!("build/{}", target.to_string());
+        let path = format!("build/{}", target);
         attempt_remove_directory(&path)?;
         self.build(target)
     }
@@ -290,7 +298,7 @@ impl Project {
     pub(crate) fn format(&self) -> Result<()> {
         let sources = collect_source_files(CollectSourceFilesMode::CCppSourcesOnly)?;
         let style_arg = if let Some(format_style) = &self.format_style {
-            "--style=".to_string() + &format_style
+            "--style=".to_string() + format_style
         } else {
             "--style=Google".to_string()
         };
@@ -348,6 +356,7 @@ pub(crate) fn collect_source_files(mode: CollectSourceFilesMode) -> Result<Vec<S
         CollectSourceFilesMode::All => {
             vec![
                 "-name", "*.f90", // FORTRAN Source
+                "-o", "-name", "*.cob", // Cobol Source
                 "-o", "-name", "*.s", // Assembly Source
                 "-o", "-name", "*.ld", // Linker Script
                 "-o", "-name", "*.c", // C Source
