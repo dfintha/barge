@@ -7,5 +7,5 @@ FLAGS=$(PFLAGS) $(WFLAGS)
 .PHONY: analyze
 
 analyze: $(CSRC) $(CXXSRC)
-	@[ \"$(CSRC)\" != \"\" ] && clang-tidy $(CSRC) -- -std={} $(FLAGS) || true
-	@[ \"$(CXXSRC)\" != \"\" ] && clang-tidy $(CXXSRC) -- -std={} $(FLAGS) || true
+	@[ "$(CSRC)" != "" ] && clang-tidy $(CSRC) -- -std={} $(FLAGS) || true
+	@[ "$(CXXSRC)" != "" ] && clang-tidy $(CXXSRC) -- -std={} $(FLAGS) || true
