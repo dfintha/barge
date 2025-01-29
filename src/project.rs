@@ -88,6 +88,14 @@ pub(crate) struct Project {
     pub pre_build_steps: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub post_build_steps: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assembler_override: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub c_compiler_override: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpp_compiler_override: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub linker_override: Option<String>,
 }
 
 impl Project {
@@ -113,6 +121,10 @@ impl Project {
             format_style: None,
             pre_build_steps: None,
             post_build_steps: None,
+            assembler_override: None,
+            c_compiler_override: None,
+            cpp_compiler_override: None,
+            linker_override: None,
         })
     }
 
@@ -155,6 +167,8 @@ impl Project {
                         build_timestamp: start_timestamp,
                         kind: BuildScriptKind::PreBuildStep,
                         toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
+                        c_compiler: self.get_c_compiler()?.to_string(),
+                        cpp_compiler: self.get_cpp_compiler()?.to_string(),
                     },
                 )?;
             }
@@ -193,6 +207,8 @@ impl Project {
                             build_timestamp: start_timestamp,
                             kind: BuildScriptKind::PostBuildStep,
                             toolset: self.toolset.unwrap_or(*DEFAULT_TOOLSET),
+                            c_compiler: self.get_c_compiler()?.to_string(),
+                            cpp_compiler: self.get_cpp_compiler()?.to_string(),
                         },
                     )?;
                 }
@@ -337,6 +353,50 @@ impl Project {
             ))
         }
     }
+
+    pub(crate) fn get_assembler(&self) -> Result<String> {
+        if let Some(assembler) = &self.assembler_override {
+            Ok(assembler.clone())
+        } else {
+            Ok(String::from("nasm"))
+        }
+    }
+
+    pub(crate) fn get_c_compiler(&self) -> Result<&str> {
+        if let Some(compiler) = &self.c_compiler_override {
+            Ok(compiler)
+        } else {
+            let toolset = self.toolset.unwrap_or(*DEFAULT_TOOLSET);
+            match toolset {
+                Toolset::Gnu => Ok("gcc"),
+                Toolset::Llvm => Ok("clang"),
+            }
+        }
+    }
+
+    pub(crate) fn get_cpp_compiler(&self) -> Result<&str> {
+        if let Some(compiler) = &self.cpp_compiler_override {
+            Ok(compiler)
+        } else {
+            let toolset = self.toolset.unwrap_or(*DEFAULT_TOOLSET);
+            match toolset {
+                Toolset::Gnu => Ok("g++"),
+                Toolset::Llvm => Ok("clang++"),
+            }
+        }
+    }
+
+    pub(crate) fn get_fortran_compiler(&self) -> Result<&str> {
+        Ok("gfortran")
+    }
+
+    pub(crate) fn get_linker(&self) -> Result<&str> {
+        if let Some(linker) = &self.linker_override {
+            Ok(linker)
+        } else {
+            self.get_cpp_compiler()
+        }
+    }
 }
 
 fn generate_default_makeopts() -> Result<Vec<String>> {
@@ -388,15 +448,6 @@ pub(crate) fn collect_source_files(mode: CollectSourceFilesMode) -> Result<Vec<S
     let mut found: Vec<_> = std::str::from_utf8(&find_src)?.split('\n').collect();
     found.retain(|str| !str.is_empty());
     Ok(found.iter().map(|s| s.to_string()).collect())
-}
-
-pub(crate) fn get_toolset_executables(
-    toolset: &Toolset,
-) -> (&'static str, &'static str, &'static str) {
-    match toolset {
-        Toolset::Gnu => ("gcc", "g++", "gfortran"),
-        Toolset::Llvm => ("clang", "clang++", "gfortran"),
-    }
 }
 
 fn get_git_user() -> Result<String> {

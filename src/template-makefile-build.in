@@ -1,6 +1,6 @@
 TARGET={}
 
-ASM=nasm
+ASM={}
 ASMFLAGS=-f elf64
 ASMSRC=$(shell find src -type f -name '*.s')
 ASMOBJ=$(patsubst src/%.s,build/$(TARGET)/obj/%.s.o,$(ASMSRC))
@@ -25,6 +25,7 @@ COBOLFLAGS={}
 COBOLSRC=$(shell find src -type f -name '*.cob')
 COBOLOBJ=$(patsubst src/%.cob,build/$(TARGET)/obj/%.cob.o,$(COBOLSRC))
 
+LD={}
 LDFLAGS={}
 LDSCRIPTS=$(shell find src -type f -name '*.ld')
 

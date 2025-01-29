@@ -1,5 +1,5 @@
 use crate::makefile::BuildTarget;
-use crate::project::{get_toolset_executables, Toolset};
+use crate::project::Toolset;
 use crate::result::{BargeError, Result};
 use crate::NO_COLOR;
 use chrono::{DateTime, Local};
@@ -30,6 +30,8 @@ pub(crate) struct ScriptEnvironment<'a> {
     pub build_timestamp: DateTime<Local>,
     pub kind: BuildScriptKind,
     pub toolset: Toolset,
+    pub c_compiler: String,
+    pub cpp_compiler: String,
 }
 
 impl TryFrom<&str> for BuildScriptLanguage {
@@ -55,8 +57,6 @@ impl TryFrom<&str> for BuildScriptLanguage {
 pub(crate) fn execute_script(path: &str, name: &str, env: ScriptEnvironment) -> Result<()> {
     let kind = BuildScriptLanguage::try_from(get_file_extension(path)?)?;
 
-    let (cc, cxx, _) = get_toolset_executables(&env.toolset);
-
     match kind {
         BuildScriptLanguage::ShellScript => {
             execute_script_plain(path, "bash", env)?;
@@ -67,11 +67,8 @@ pub(crate) fn execute_script(path: &str, name: &str, env: ScriptEnvironment) -> 
         BuildScriptLanguage::PerlScript => {
             execute_script_plain(path, "perl", env)?;
         }
-        BuildScriptLanguage::CSource => {
-            execute_c_cpp_source(path, name, cc, "-std=c11", env)?;
-        }
-        BuildScriptLanguage::CppSource => {
-            execute_c_cpp_source(path, name, cxx, "-std=c++17", env)?;
+        BuildScriptLanguage::CSource | BuildScriptLanguage::CppSource => {
+            execute_c_cpp_source(path, name, kind, env)?;
         }
     }
     Ok(())
@@ -116,10 +113,21 @@ fn execute_script_env(path: &str, interpreter: &str, env: ScriptEnvironment) -> 
 fn execute_c_cpp_source(
     path: &str,
     name: &str,
-    compiler: &str,
-    std_flag: &str,
+    language: BuildScriptLanguage,
     env: ScriptEnvironment,
 ) -> Result<()> {
+    let compiler = match language {
+        BuildScriptLanguage::CSource => Ok(&env.c_compiler),
+        BuildScriptLanguage::CppSource => Ok(&env.cpp_compiler),
+        _ => Err(BargeError::InvalidValue("Unreachable branch reached.")),
+    }?;
+
+    let std_flag = match language {
+        BuildScriptLanguage::CSource => Ok("-std=c11"),
+        BuildScriptLanguage::CppSource => Ok("-std=c++17"),
+        _ => Err(BargeError::InvalidValue("Unreachable branch reached.")),
+    }?;
+
     let subdirectory = match env.kind {
         BuildScriptKind::PreBuildStep => "prebuild",
         BuildScriptKind::PostBuildStep => "postbuild",

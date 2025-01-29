@@ -44,11 +44,9 @@ for proper functionality.
 - `clang (clang, clang++)`: Used to compile C/C++ source files and to compile
   the dependency tree of C/C++ object files, if the LLVM toolset is chosen.
 - `lldb`: Used to debug executable binaries, if the LLVM toolset is chosen.
-- `lld`: Used to link the resulting binary, if the LLVM toolset is chosen.
 - `gcc (gcc, g++)`: Used to compile C/C++ source files and to compile
   the dependency tree of C/C++ object files, if the GNU toolset is chosen.
 - `gdb`: Used to debug executable binaries, if the GNU toolset is chosen.
-- `ld`: Used to link the resulting binary, if the GNU toolset is chosen.
 - `gfortran`: Used to compile FORTRAN source files.
 - `cobc`: Used to compile Cobol source files.
 - `doxygen`: Used to generate HTML documentation for projects.
@@ -157,6 +155,17 @@ following fields.
 - **`post_build_steps` (string, optional)**:
   List of scripts and/or C/C++ source files to execute after a successful build.
   These steps are executed in the same order they are in this list.
+- **`assembler_override` (string, optional)**:
+  Specifies the override for the assembler executable.
+- **`c_compiler_override` (string, optional)**:
+  Specifies the override for the C compiler executable. Note that the
+  command-line arguments will still be set based on `toolset`.
+- **`cpp_compiler_override` (string, optional)**:
+  Specifies the override for the C++ compiler executable. Note that the
+  command-line arguments will still be set based on `toolset`.
+- **`linker_override` (string, optional)**:
+  Specifies the override for the linker executable. Note that the
+  command-line arguments will still be set based on `toolset`.
 
 
 ### Specific project file, which contains all the optional fields
@@ -197,7 +206,11 @@ following fields.
     ],
     "post_build_steps": [
         "postbuild.c"
-    ]
+    ],
+    "assembler_override": "yasm",
+    "c_compiler_override": "x86_64-elf-gcc",
+    "cpp_compiler_override": "x86_64-elf-g++",
+    "linker_override": "x86_64-elf-ld"
 }
 ```
 

@@ -1,9 +1,9 @@
 use crate::output::NO_COLOR;
 use crate::project::{
-    collect_source_files, get_toolset_executables, CollectSourceFilesMode, Library, Project,
-    ProjectType, DEFAULT_COBOL_STANDARD, DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS,
-    DEFAULT_CUSTOM_COBOLFLAGS, DEFAULT_CUSTOM_CXXFLAGS, DEFAULT_CUSTOM_FORTRANFLAGS,
-    DEFAULT_CUSTOM_LDFLAGS, DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD, DEFAULT_TOOLSET,
+    collect_source_files, CollectSourceFilesMode, Library, Project, ProjectType,
+    DEFAULT_COBOL_STANDARD, DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_COBOLFLAGS,
+    DEFAULT_CUSTOM_CXXFLAGS, DEFAULT_CUSTOM_FORTRANFLAGS, DEFAULT_CUSTOM_LDFLAGS,
+    DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD,
 };
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
@@ -68,12 +68,6 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         BuildTarget::Release => ("-DNDEBUG -O2 -ffast-math", "-s"),
     };
 
-    let toolset = if let Some(toolset) = &project.toolset {
-        toolset
-    } else {
-        DEFAULT_TOOLSET
-    };
-
     let c_std = get_field_or_default!(project.c_standard, DEFAULT_C_STANDARD);
     let cpp_std = get_field_or_default!(project.cpp_standard, DEFAULT_CPP_STANDARD);
     let fortran_std = get_field_or_default!(project.fortran_standard, DEFAULT_FORTRAN_STANDARD);
@@ -85,8 +79,6 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         get_field_or_default!(project.custom_fortranflags, DEFAULT_CUSTOM_FORTRANFLAGS);
     let custom_cobolflags =
         get_field_or_default!(project.custom_cobolflags, DEFAULT_CUSTOM_COBOLFLAGS);
-
-    let (c_compiler, cpp_compiler, fortran_compiler) = get_toolset_executables(toolset);
 
     let pic_flag = if project.project_type != ProjectType::Executable {
         "-fPIC"
@@ -166,8 +158,8 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     };
 
     let link_command = match project.project_type {
-        ProjectType::Executable => "@$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)",
-        ProjectType::SharedLibrary => "@$(CXX) -shared $(OBJECTS) -o $@ $(LDFLAGS)",
+        ProjectType::Executable => "@$(LD) $(OBJECTS) -o $@ $(LDFLAGS)",
+        ProjectType::SharedLibrary => "@$(LD) -shared $(OBJECTS) -o $@ $(LDFLAGS)",
         ProjectType::StaticLibrary => "@ar rcs $@ $(OBJECTS)",
     };
 
@@ -190,13 +182,15 @@ DIM=`tput dim`
     let result = format!(
         include_str!("template-makefile-build.in"),
         target.to_string(),
-        c_compiler,
+        project.get_assembler()?,
+        project.get_c_compiler()?,
         cflags,
-        cpp_compiler,
+        project.get_cpp_compiler()?,
         cxxflags,
-        fortran_compiler,
+        project.get_fortran_compiler()?,
         fortranflags,
         cobolflags,
+        project.get_linker()?,
         ldflags,
         name,
         colorization,
