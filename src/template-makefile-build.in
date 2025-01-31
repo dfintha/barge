@@ -9,11 +9,17 @@ CC={}
 CFLAGS={}
 CSRC=$(shell find src -type f -name '*.c')
 COBJ=$(patsubst src/%.c,build/$(TARGET)/obj/%.c.o,$(CSRC))
+OBJCFLAGS={}
+OBJCSRC=$(shell find src -type f -name '*.m')
+OBJCOBJ=$(patsubst src/%.m,build/$(TARGET)/obj/%.m.o,$(OBJCSRC))
 
 CXX={}
 CXXFLAGS={}
 CXXSRC=$(shell find src -type f -name '*.cpp')
 CXXOBJ=$(patsubst src/%.cpp,build/$(TARGET)/obj/%.cpp.o,$(CXXSRC))
+OBJCXXFLAGS={}
+OBJCXXSRC=$(shell find src -type f -name '*.mm')
+OBJCXXOBJ=$(patsubst src/%.mm,build/$(TARGET)/obj/%.mm.o,$(OBJCXXSRC))
 
 FORTRAN={}
 FORTRANFLAGS={}
@@ -31,8 +37,8 @@ LDSCRIPTS=$(shell find src -type f -name '*.ld')
 
 NAME={}
 BINARY=build/$(TARGET)/$(NAME)
-SOURCES=$(CSRC) $(CXXSRC) $(ASMSRC) $(FORTRANSRC) $(COBOLSRC)
-OBJECTS=$(COBJ) $(CXXOBJ) $(ASMOBJ) $(FORTRANOBJ) $(COBOLOBJ)
+SOURCES=$(ASMSRC) $(CSRC) $(CXXSRC) $(OBJCSRC) $(OBJCXXSRC) $(FORTRANSRC) $(COBOLSRC)
+OBJECTS=$(ASMOBJ) $(COBJ) $(CXXOBJ) $(OBJCOBJ) $(OBJCXXOBJ) $(FORTRANOBJ) $(COBOLOBJ)
 
 {} # Colorization Constants
 
@@ -63,6 +69,16 @@ build/$(TARGET)/obj/%.cpp.o: src/%.cpp
 	@mkdir -p $(shell dirname $@)
 	@printf '%s%sBuilding C++ object %s.%s\n' $(GREEN) $(DIM) $@ $(RESET)
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+build/$(TARGET)/obj/%.m.o: src/%.m
+	@mkdir -p $(shell dirname $@)
+	@printf '%s%sBuilding Objective-C object %s.%s\n' $(GREEN) $(DIM) $@ $(RESET)
+	@$(CC) $(OBJCFLAGS) -c $< -o $@
+
+build/$(TARGET)/obj/%.mm.o: src/%.mm
+	@mkdir -p $(shell dirname $@)
+	@printf '%s%sBuilding Objective-C++ object %s.%s\n' $(GREEN) $(DIM) $@ $(RESET)
+	@$(CXX) $(OBJCXXFLAGS) -c $< -o $@
 
 build/$(TARGET)/obj/%.f90.o: src/%.f90
 	@mkdir -p $(shell dirname $@)

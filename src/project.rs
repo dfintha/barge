@@ -17,6 +17,8 @@ pub const DEFAULT_COBOL_STANDARD: &str = "cobol2014";
 pub const DEFAULT_TOOLSET: &Toolset = &Toolset::Llvm;
 pub const DEFAULT_CUSTOM_CFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_CXXFLAGS: &str = "";
+pub const DEFAULT_CUSTOM_OBJCFLAGS: &str = "";
+pub const DEFAULT_CUSTOM_OBJCXXFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_FORTRANFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_COBOLFLAGS: &str = "";
 pub const DEFAULT_CUSTOM_LDFLAGS: &str = "";
@@ -75,6 +77,10 @@ pub(crate) struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_cxxflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_objcflags: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_objcxxflags: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_fortranflags: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_cobolflags: Option<String>,
@@ -114,6 +120,8 @@ impl Project {
             external_libraries: None,
             custom_cflags: None,
             custom_cxxflags: None,
+            custom_objcflags: None,
+            custom_objcxxflags: None,
             custom_fortranflags: None,
             custom_cobolflags: None,
             custom_ldflags: None,
@@ -421,6 +429,8 @@ pub(crate) fn collect_source_files(mode: CollectSourceFilesMode) -> Result<Vec<S
                 "-o", "-name", "*.ld", // Linker Script
                 "-o", "-name", "*.c", // C Source
                 "-o", "-name", "*.cpp", // C++ Source
+                "-o", "-name", "*.m", // Objective-C Source
+                "-o", "-name", "*.mm", // Objective-C++ Source
                 "-o", "-name", "*.h", // C Header
                 "-o", "-name", "*.hpp", // C++ Header
             ]

@@ -12,9 +12,21 @@ the source and header files respectively. Subdirectories within these
 directories are supported.
 
 Source and header files shall have appropriate file extensions based on their
-type: `.c` for C source files, `.cpp` for C++ source files, `.s` for Assembly
-source files, `.f90` for FORTRAN source files, `.ld` for linker scripts, `.h`
-for C header files, and `.hpp` for C++ header files.
+type.
+
+- `.s` for Assembly source files,
+- `.c` for C source files,
+- `.h` for (Objective-)C header files,
+- `.cpp` for C++ source files,
+- `.hpp` for (Objective-)C++ header files,
+- `.m` for Objective-C source files,
+- `.mm` for Objective-C++ source files,
+- `.f90` for FORTRAN source files,
+- `.cob` for Cobol source files, and
+- `.ld` for linker scripts.
+
+Note that the C/C++ compiler choice will be used to compile Objective-C/C++
+files, too.
 
 `barge` supports the [`NO_COLOR`](https://no-color.org/) environment variable:
 if it is set, no output will be colorized using ANSI terminal escape codes.
@@ -49,6 +61,7 @@ for proper functionality.
 - `gdb`: Used to debug executable binaries, if the GNU toolset is chosen.
 - `gfortran`: Used to compile FORTRAN source files.
 - `cobc`: Used to compile Cobol source files.
+- `gnustep`: Used for Objective-C and Objective-C++ projects.
 - `doxygen`: Used to generate HTML documentation for projects.
 - `bash`: Used for pre- and post-build shell scripts (if present).
 - `python`: Used for pre- and post-build Python 3 scripts (if present).
@@ -130,6 +143,12 @@ following fields.
   Adds the flags specified here to the C source file compilation command line.
 - **`custom_cxxflags` (string, optional)**:
   Adds the flags specified here to the C++ source file compilation command line.
+- **`custom_objcflags` (string, optional)**:
+  Adds the flags specified here to the Objective-C source file compilation
+  command line.
+- **`custom_objcxxflags` (string, optional)**:
+  Adds the flags specified here to the Objective-C++ source file compilation
+  command line.
 - **`custom_fortranflags` (string, optional)**:
   Adds the flags specified here to the FORTRAN source file compilation command
   line.
@@ -195,6 +214,8 @@ following fields.
     ],
     "custom_cflags": "-DNDEBUG",
     "custom_cxxflags": "-DNDEBUG",
+    "custom_objcflags": "-DNDEBUG",
+    "custom_objcxxflags": "-DNDEBUG",
     "custom_fortranflags": "",
     "custom_cobolflags": "",
     "custom_ldflags": "-ggdb",

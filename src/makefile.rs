@@ -3,7 +3,8 @@ use crate::project::{
     collect_source_files, CollectSourceFilesMode, Library, Project, ProjectType,
     DEFAULT_COBOL_STANDARD, DEFAULT_CPP_STANDARD, DEFAULT_CUSTOM_CFLAGS, DEFAULT_CUSTOM_COBOLFLAGS,
     DEFAULT_CUSTOM_CXXFLAGS, DEFAULT_CUSTOM_FORTRANFLAGS, DEFAULT_CUSTOM_LDFLAGS,
-    DEFAULT_C_STANDARD, DEFAULT_FORTRAN_STANDARD,
+    DEFAULT_CUSTOM_OBJCFLAGS, DEFAULT_CUSTOM_OBJCXXFLAGS, DEFAULT_C_STANDARD,
+    DEFAULT_FORTRAN_STANDARD,
 };
 use crate::result::{BargeError, Result};
 use serde::Deserialize;
@@ -57,6 +58,22 @@ fn get_cobol_ldflags() -> Result<String> {
     Ok(String::from_utf8(result)?)
 }
 
+fn get_objc_flags() -> Result<String> {
+    let result = Command::new("gnustep-config")
+        .arg("--objc-flags")
+        .output()?
+        .stdout;
+    Ok(String::from_utf8(result)?.trim().to_string())
+}
+
+fn get_objc_ldflags() -> Result<String> {
+    let result = Command::new("gnustep-config")
+        .arg("--objc-libs")
+        .output()?
+        .stdout;
+    Ok(String::from_utf8(result)?.trim().to_string() + " -lgnustep-base")
+}
+
 pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) -> Result<String> {
     let common_cflags = "-Wall -Wextra -Wpedantic -Wshadow -Wconversion \
                          -Wdouble-promotion -Wformat=2 -Iinclude -Isrc";
@@ -74,6 +91,9 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
     let cobol_std = get_field_or_default!(project.cobol_standard, DEFAULT_COBOL_STANDARD);
     let custom_cflags = get_field_or_default!(project.custom_cflags, DEFAULT_CUSTOM_CFLAGS);
     let custom_cxxflags = get_field_or_default!(project.custom_cxxflags, DEFAULT_CUSTOM_CXXFLAGS);
+    let custom_objcflags = get_field_or_default!(project.custom_cflags, DEFAULT_CUSTOM_OBJCFLAGS);
+    let custom_objcxxflags =
+        get_field_or_default!(project.custom_cxxflags, DEFAULT_CUSTOM_OBJCXXFLAGS);
     let custom_ldflags = get_field_or_default!(project.custom_ldflags, DEFAULT_CUSTOM_LDFLAGS);
     let custom_fortranflags =
         get_field_or_default!(project.custom_fortranflags, DEFAULT_CUSTOM_FORTRANFLAGS);
@@ -135,6 +155,24 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         String::new()
     };
 
+    let has_objc_sources = collect_source_files(CollectSourceFilesMode::All)?
+        .iter()
+        .any(|source| source.ends_with(".m") || source.ends_with(".mm"));
+
+    let (objc_flags, objcxx_flags, objc_ldflags) = if has_objc_sources {
+        (
+            get_objc_flags()? + custom_objcflags,
+            get_objc_flags()? + custom_objcxxflags,
+            get_objc_ldflags()?
+        )
+    } else {
+        (
+            String::from(custom_objcflags),
+            String::from(custom_objcxxflags),
+            String::new()
+        )
+    };
+
     let ldscriptflags = collect_source_files(CollectSourceFilesMode::LinkerScriptsOnly)?
         .iter()
         .map(|f| format!("-T {}", f))
@@ -142,12 +180,13 @@ pub(crate) fn generate_build_makefile(project: &Project, target: BuildTarget) ->
         .join(" ");
 
     let ldflags = format!(
-        "{} {} {} {} {} {}",
+        "{} {} {} {} {} {} {}",
         target_ldflags,
         library_ldflags,
         custom_ldflags,
         fortran_ldflags,
         cobol_ldflags.trim(),
+        objc_ldflags,
         ldscriptflags
     );
 
@@ -185,8 +224,10 @@ DIM=`tput dim`
         project.get_assembler()?,
         project.get_c_compiler()?,
         cflags,
+        objc_flags,
         project.get_cpp_compiler()?,
         cxxflags,
+        objcxx_flags,
         project.get_fortran_compiler()?,
         fortranflags,
         cobolflags,
