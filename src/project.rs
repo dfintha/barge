@@ -463,8 +463,8 @@ pub(crate) fn collect_source_files(mode: CollectSourceFilesMode) -> Result<Vec<S
 fn get_git_user() -> Result<String> {
     Ok(format!(
         "{} <{}>",
-        get_git_config_field("user.name")?.trim_end(),
-        get_git_config_field("user.email")?.trim_end(),
+        get_git_config_field("user.name").unwrap_or("Anonymous".to_string()).trim_end(),
+        get_git_config_field("user.email").unwrap_or(String::new()).trim_end(),
     ))
 }
 
